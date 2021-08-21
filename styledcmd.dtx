@@ -169,6 +169,8 @@
 %
 %Se ora viene lanciato il comando \setGroupStyle{saluti}{informali} \verb+\setGroupStyle{saluti}{informali}+ gli stessi comandi ora espanderanno come \ciao{Enrico} e \via{} in quanto lo stile di default di \verb+saluti+ ora è \verb+informali+.
 %
+%Come per i comandi definiti con \tn{newstyledcmd} anche con quest'ultimi è possibile specificare espressamente lo stile: per esempio \verb+\ciao[formali]{Enrico}+ espanderà come \ciao[formali]{Enrico}.
+%
 %\section{Esempi matematici pratici}
 %In questa sezione daremo alcune applicazioni pratiche di \thpkg{}. Lo scopo iniziale che ha portato alla creazione di questo package nasce dalla necessità di dover scrivere gli stessi concetti matematici in base alla disciplina (o alla rivista nel caso decidessero inverosimilmente di includere questa libreria) scelta. Ogni matematico nel corso del tempo può implementare una propria libreria di macro utili sia per velocizzare la scrittura che per migliorare la leggibilità del codice.
 
@@ -227,11 +229,11 @@
 %\section{Implementazione}
 %
 %Questa sezione è solo per i duri e puri.
-
-%\begin{macro}{\__stycmd_format:nn}
+%
+%\begin{macro}{\__stycmd_cmd:nn}
 %Nome effettivo di un comando con un particolare stile
 %    \begin{macrocode}
-\cs_new:Npn \__stycmd_format:nn #1#2{ __styledcmd_stycmd_#1_#2 }
+\cs_new:Npn \__stycmd_cmd:nn #1#2{ __stycmd_command_#1_#2 }
 %    \end{macrocode}
 %\end{macro}
 %
@@ -242,7 +244,7 @@
 
 \cs_new_protected:Npn\__stycmd_erroring:nn #1#2
   {
-    \cs_if_free:cT { \__stycmd_format:nn {#1} {#2} }
+    \cs_if_free:cT { \__stycmd_cmd:nn {#1} {#2} }
       { \msg_error:nnnn { stycmd } { noformat } {#1} {#2} }
   }
 %    \end{macrocode}
@@ -255,24 +257,24 @@
   {
     \IfNoValueTF {#3}
       {
-        \exp_args:Nc \newcommand { \__stycmd_format:nn {#1} {#2} } {#4}
+        \exp_args:Nc \newcommand { \__stycmd_cmd:nn {#1} {#2} } {#4}
       }
       {
-        \exp_args:Nc \newcommand { \__stycmd_format:nn {#1} {#2} } [#3] {#4}
+        \exp_args:Nc \newcommand { \__stycmd_cmd:nn {#1} {#2} } [#3] {#4}
       }
 
-    \exp_args:Ncc \providecommand { \__stycmd_format:nn {#1} {default} }
-      { \__stycmd_format:nn {#1} {#2} }
+    \exp_args:Ncc \providecommand { \__stycmd_cmd:nn {#1} {default} }
+      { \__stycmd_cmd:nn {#1} {#2} }
     
     \exp_args:Nc \ProvideDocumentCommand {#1} {o}
       {
         \IfNoValueTF {##1}
           {
-            \use:c { \__stycmd_format:nn {#1} {default} }
+            \use:c { \__stycmd_cmd:nn {#1} {default} }
           }
           {
-            \__stycmd_erroring:nn {#1} {#2}
-            \use:c{ \__stycmd_format:nn {#1} {##1} }
+            \__stycmd_erroring:nn {#1} {##1}
+            \use:c{ \__stycmd_cmd:nn {#1} {##1} }
           }
       }
   }
@@ -285,19 +287,19 @@
 \NewDocumentCommand \NewDocStyledCMD {m m m +m}
   {
     \exp_args:Nc \NewDocumentCommand
-      { \__stycmd_format:nn {#1} {#2} } {#3} {#4}
-    \exp_args:Ncc \providecommand { \__stycmd_format:nn {#1} {default} }
-      { \__stycmd_format:nn {#1} {#2} }
+      { \__stycmd_cmd:nn {#1} {#2} } {#3} {#4}
+    \exp_args:Ncc \providecommand { \__stycmd_cmd:nn {#1} {default} }
+      { \__stycmd_cmd:nn {#1} {#2} }
     
     \exp_args:Nc \ProvideDocumentCommand {#1} {o}
       {
         \IfNoValueTF{##1}
           {
-            \use:c{ \__stycmd_format:nn {#1} {default} }
+            \use:c{ \__stycmd_cmd:nn {#1} {default} }
           }
           {
-            \__stycmd_erroring:nn {#1} {#2}
-            \use:c{ \__stycmd_format:nn {#1} {##1} }
+            \__stycmd_erroring:nn {#1} {##1}
+            \use:c{ \__stycmd_cmd:nn {#1} {##1} }
           }
       }
   }
@@ -309,23 +311,16 @@
 %    \begin{macrocode}
 \NewDocumentCommand \setGlobalStyle{m m}{%
     \__stycmd_erroring:nn {#1} {#2}
-    \exp_args:Ncc \renewcommand { \__stycmd_format:nn {#1} {default} }
-      { \__stycmd_format:nn {#1} {#2} }
+    \exp_args:Ncc \renewcommand { \__stycmd_cmd:nn {#1} {default} }
+      { \__stycmd_cmd:nn {#1} {#2} }
 }
-%    \end{macrocode}
-%\end{macro}
-%
-%\begin{macro}{\__stycmd_compose:nn}
-%Crea uno stile fittizio a partire dal nome del gruppo e dello stile
-%    \begin{macrocode}
-\cs_new:Npn \__stycmd_compose:nn #1#2 { #1__#2 }
 %    \end{macrocode}
 %\end{macro}
 %
 %\begin{macro}{\__stycmd_gvar:n}
 %Nome della variabile associata al gruppo.
 %    \begin{macrocode}
-\cs_new:Npn \__stycmd_gvar:n #1 { l__styledcmd_g_#1_tl }
+\cs_new:Npn \__stycmd_gvar:n #1 { l__styledcmd_g_#1_seq }
 %    \end{macrocode}
 %\end{macro}
 %
@@ -334,9 +329,13 @@
 %    \begin{macrocode}
 \NewDocumentCommand { \defGroupStyle } { m m }
   {
-    \cs_gset:Nn \__stycmd_gfname: { \__stycmd_compose:nn {#1} {#2} }
-    \tl_if_exist:cF { \__stycmd_gvar:n { \__stycmd_gfname: } }
-      { \tl_new:c { \__stycmd_gvar:n { \__stycmd_gfname: } } }
+    \tl_clear_new:N \l__stycmd_group_tl
+    \tl_set:Nn \l__stycmd_group_tl {#1}
+    \tl_clear_new:N \l__stycmd_format_tl
+    \tl_set:Nn \l__stycmd_format_tl {#2}
+
+    \seq_if_exist:cF { \__stycmd_gvar:n {#1} }
+      { \seq_new:c { \__stycmd_gvar:n {#1} } }
   }
 %    \end{macrocode}
 %\end{macro}
@@ -348,12 +347,12 @@
   {
     \IfNoValueTF {#2}
       {
-        \newstyledcmd {#1} { \__stycmd_gfname: } {#3}
+        \newstyledcmd {#1} { \l__stycmd_format_tl } {#3}
       }
       {
-        \newstyledcmd {#1} { \__stycmd_gfname: } [#2] {#3}
+        \newstyledcmd {#1} { \l__stycmd_format_tl } [#2] {#3}
       }
-    \tl_put_left:cn { \__stycmd_gvar:n { \__stycmd_gfname: } } { {#1} }
+    \seq_put_left:cn { \__stycmd_gvar:n { \l__stycmd_group_tl } } {#1}
   }
 %    \end{macrocode}
 %\end{macro}
@@ -363,9 +362,9 @@
 %    \begin{macrocode}
 \NewDocumentCommand \setGroupStyle { m m }
   {
-    \tl_map_inline:cn { \__stycmd_gvar:n { \__stycmd_compose:nn {#1} {#2} } }
+    \seq_map_inline:cn { \__stycmd_gvar:n {#1} }
       {
-        \setGlobalStyle {##1} { \__stycmd_compose:nn {#1} {#2} }
+        \setGlobalStyle {##1} {#2}
       }
   }
 %    \end{macrocode}
