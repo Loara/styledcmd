@@ -1,0 +1,76 @@
+\NeedsTeXFormat{LaTeX2e}
+\RequirePackage{expl3}
+\ProvidesExplPackage{styledcmd}{2021/08/20}{2.0}{Command with different styles}
+%\ProvidesPackage{styledcmd}[2021/03/02 Command with different styles]
+\RequirePackage{xparse}
+
+\cs_new:Npn\__stycmd_format:nn #1#2{__styledcmd_stycmd_#1_#2}
+
+\msg_new:nnn{stycmd}{noformat}{Style~#2~not~defined~for~command~#1}
+
+\cs_new_protected:Npn\__stycmd_erroring:nn #1#2{\cs_if_free:cT{\__stycmd_format:nn{#1}{#2}}{\msg_error:nnnn{stycmd}{noformat}{#1}{#2}}}
+
+\NewDocumentCommand \newstyledcmd{m m o +m}{%
+\IfNoValueTF{#3}
+   {\exp_args:Nc\newcommand{\__stycmd_format:nn{#1}{#2}}{#4}}
+    {\exp_args:Nc\newcommand{\__stycmd_format:nn{#1}{#2}}[#3]{#4}}
+    \exp_args:Ncc\providecommand{\__stycmd_format:nn{#1}{default}}{\__stycmd_format:nn{#1}{#2}}
+    
+    %Comando vero e proprio
+    \exp_args:Nc\ProvideDocumentCommand{#1}{o}{%
+        \IfNoValueTF{##1}{%
+            \use:c{\__stycmd_format:nn{#1}{default}}
+        }{%
+            \__stycmd_erroring:nn{#1}{#2}
+            \use:c{\__stycmd_format:nn{#1}{##1}}
+        }
+    }
+}
+
+%Comandi personalizzati
+\NewDocumentCommand \NewDocStyledCMD{m m m +m}{%
+\exp_args:Nc\NewDocumentCommand{\__stycmd_format:nn{#1}{#2}}{#3}{#4}
+    \exp_args:Ncc\providecommand{\__stycmd_format:nn{#1}{default}}{\__stycmd_format:nn{#1}{#2}}
+    
+    %Comando vero e proprio
+    \exp_args:Nc\ProvideDocumentCommand{#1}{o}{%
+        \IfNoValueTF{##1}{%
+            \use:c{\__stycmd_format:nn{#1}{default}}
+        }{%
+            \__stycmd_erroring:nn{#1}{#2}
+            \use:c{\__stycmd_format:nn{#1}{##1}}
+        }
+    }
+}
+
+\NewDocumentCommand \setGlobalStyle{m m}{%
+    \__stycmd_erroring:nn{#1}{#2}
+    \exp_args:Ncc\renewcommand{\__stycmd_format:nn{#1}{default}}{\__stycmd_format:nn{#1}{#2}}
+}
+
+%Group styles
+%1 group 2 style
+\cs_new:Npn\__stycmd_compose:nn #1#2{#1__#2}
+
+\cs_new:Npn\__stycmd_gvar:n #1{l__styledcmd_g_#1_tl}
+
+\NewDocumentCommand{\defGroupStyle}{m m}{
+ \cs_gset:Nn\__stycmd_gfname:{\__stycmd_compose:nn{#1}{#2}}
+ \tl_if_exist:cF{\__stycmd_gvar:n{\__stycmd_gfname:}}
+ {
+  \tl_new:c{\__stycmd_gvar:n{\__stycmd_gfname:}}
+ }
+}
+
+\NewDocumentCommand\newgstyledcmd{m o +m}{
+    \IfNoValueTF{#2}{
+        \newstyledcmd{#1}{\__stycmd_gfname:}{#3}
+    }{
+        \newstyledcmd{#1}{\__stycmd_gfname:}[#2]{#3}
+    }
+    \tl_put_left:cn{\__stycmd_gvar:n{\__stycmd_gfname:}}{{#1}}
+}
+
+\NewDocumentCommand{\setGroupStyle}{m m}{
+    \tl_map_inline:cn{\__stycmd_gvar:n{\__stycmd_compose:nn{#1}{#2}}}{\setGlobalStyle{##1}{\__stycmd_compose:nn{#1}{#2}}}
+}
