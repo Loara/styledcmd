@@ -20,7 +20,7 @@
 %
 % \iffalse
 %<*driver>
-\ProvidesFile{styledcmd.dtx}[2021/08/20 2.0 Command with different styles]
+\ProvidesFile{styledcmd.dtx}[2021/08/20 2.1 Command with different styles]
 %</driver>
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\RequirePackage{expl3}[2018-04-12]
@@ -119,26 +119,47 @@
 %\end{verbatim}
 %che saranno rispettivamente equivalenti ad \prova<ciao>; \prova[stilea]<ciao>; \prova[stileb]<ciao>.
 %
+%
 %\section{Gruppi di comandi}
-%Con la versione \verb+2.0+ di \thpkg{} è possibile definire anche gruppi di comandi che condividono un medesimo stile e che quindi un cambiamento dello stile globale deve influenzare tutti i comandi in tale gruppo.
+%Con la versione \verb+2.1+ di \thpkg{} è possibile definire anche gruppi di comandi che condividono un medesimo stile e che quindi un cambiamento dello stile globale deve influenzare tutti i comandi in tale gruppo.
 %
-%Per definire un gruppo ed uno stile si utilizza la macro
+%Per iniziare un gruppo si utilizza la macro
 %
-%\begin{function}{\defGroupStyle}
+%\begin{function}{\styBeginGroup}
 %\begin{syntax}
-%|\defGroupStyle| \marg{nome gruppo} \marg{nome stile}
+%|\styBeginGroup| \marg{nome gruppo}
+%\end{syntax}
+%\end{function}
+%che una volta finito di definire i comandi deve essere sempre terminato con la macro
+%\begin{function}{\styEndGroup}
+%\begin{syntax}
+%|\styEndGroup|
 %\end{syntax}
 %\end{function}
 %
-%ed una volta eseguita tutti i comandi definiti tramite la seguente macro, che funziona in maniera del tutto simile a \tn{newstyledcmd}
+%All'interno di un gruppo i comandi vengono raggruppati in base allo stile. Un blocco di stile deve essere iniziato con la macro
 %
-%\begin{function}{\newgstyledcmd}
+%\begin{function}{\styBeginStyle}
 %\begin{syntax}
-%|\newgstyledcmd| \marg{nome comando} \oarg{numero argomenti} \marg{codice}
+%|\styBeginStyle| \marg{nome stile}
+%\end{syntax}
+%\end{function}
+%e terminare con
+%\begin{function}{\styEndStyle}
+%\begin{syntax}
+%|\styEndStyle|
 %\end{syntax}
 %\end{function}
 %
-%apparterranno al gruppo e allo stile specificato dall'ultimo \tn{defGroupStyle} specificato. Per iniziare un nuovo gruppo e/o stile si esegue di nuovo la macro \tn{defGroupStyle} con i nuovi parametri e si continuano a definire altri comandi con il nuovo stile. Lo stile predefinito per un gruppo di comandi sarà sempre il primo stile definito tramite \tn{defGroupStyle} per quel particolare gruppo, per cambiare lo stile predefinito di un gruppo particolare si utilizza la macro
+%Per definire i comandi all'interno di un gruppo si usa la seguente macro
+%
+%\begin{function}{\newGstyledcmd}
+%\begin{syntax}
+%|\newGstyledcmd| \marg{nome comando} \oarg{numero argomenti} \marg{codice}
+%\end{syntax}
+%\end{function}
+%
+%con la stessa sintassi di \tn{newstyledcmd} con l'unica differenza che in quest'ultimo caso non deve essere specificato lo stile in quanto già indicato da \tn{styBeginStyle} ... \tn{styEndStyle}. Lo stile predefinito per un gruppo di comandi sarà sempre il primo stile definito all'interno del gruppo, per cambiare lo stile predefinito di un gruppo particolare si utilizza la macro
 %
 %\begin{function}{\setGroupStyle}
 %\begin{syntax}
@@ -146,24 +167,31 @@
 %\end{syntax}
 %\end{function}
 %
-%È doveroso a questo punto fare almeno un esempio pratico. Consideriamo le seguenti linee di codice LaTeX
+%che cambierà poi lo stile di tutti i comandi definiti all'interno del gruppo. È doveroso a questo punto fare almeno un esempio pratico. Consideriamo le seguenti linee di codice LaTeX
 %
-%    \defGroupStyle{saluti}{formali}
-%    \newgstyledcmd{ciao}[1]{Buongiorno #1}
-%    \newgstyledcmd{via}{Arrivederci}
-%
-%    \defGroupStyle{saluti}{informali}
-%    \newgstyledcmd{ciao}[1]{Ciao #1}
-%    \newgstyledcmd{via}{Ciaooooo}
+%    \styBeginGroup{saluti}
+%    \styBeginStyle{formali}
+%    \newGstyledcmd{ciao}[1]{Buongiorno #1}
+%    \newGstyledcmd{via}{Arrivederci}
+%    \styEndStyle
+%    \styBeginStyle{informali}
+%    \newGstyledcmd{ciao}[1]{Ciao #1}
+%    \newGstyledcmd{via}{Ciaooooo}
+%    \styEndStyle
+%    \styEndGroup
 %
 %\begin{verbatim}
-%    \defGroupStyle{saluti}{formali}
-%    \newgstyledcmd{ciao}[1]{Buongiorno #1}
-%    \newgstyledcmd{via}{Arrivederci}
+%    \styBeginGroup{saluti}
+%      \styBeginStyle{formali}
+%        \newGstyledcmd{ciao}[1]{Buongiorno #1}
+%        \newGstyledcmd{via}{Arrivederci}
+%      \styEndStyle
 %
-%    \defGroupStyle{saluti}{informali}
-%    \newgstyledcmd{ciao}[1]{Ciao #1}
-%    \newgstyledcmd{via}{Ciaooooo}
+%      \styBeginStyle{informali}
+%        \newGstyledcmd{ciao}[1]{Ciao #1}
+%        \newGstyledcmd{via}{Ciaooooo}
+%      \styEndStyle
+%    \styEndGroup
 %\end{verbatim}
 %che definiscono il gruppo \verb+saluti+ con i due stili \verb+formali+ ed \verb+informali+ ed in tale gruppo sono definiti i comandi \tn{ciao} e \tn{via} con entrambi gli stili. Dato che per il gruppo \verb+saluti+ il primo stile ad essere stato definito è \verb+formali+ esso sarà anche lo stile predefinito per il gruppo, quindi i comandi \verb+\ciao{Enrico}+ e \verb+\via+ espanderanno rispettivamente come \ciao{Enrico} e \via{}.
 %
@@ -199,26 +227,34 @@
 % \newstyledcmd{obal}{rmid}[2]{B({#1}; {#2})}
 %\end{verbatim}
 %
-%\defGroupStyle{interval}{tpar}
-%\newgstyledcmd{ooint}[2]{(#1, #2)}
 %
-%\defGroupStyle{interval}{qpar}
-%\newgstyledcmd{ooint}[2]{]#1, #2[}
+%    \styBeginGroup{interval}
+%    \styBeginStyle{tpar}
+%    \newGstyledcmd{ooint}[2]{(#1, #2)}
+%    \styEndStyle
+%    \styBeginStyle{qpar}
+%    \newGstyledcmd{ooint}[2]{]#1, #2[}
+%    \styEndStyle
+%    \styEndGroup
 %
 %Un altro problema del genere è dato dagli intervalli aperti in $\mathbb R$. Alcuni libri di testo indicano gli intervalli aperti con le parentesi tonde $\ooint ab$ mentre altri preferiscono usare le parentesi quadre rovesciate\setGroupStyle{interval}{qpar} $\ooint ab$. Dato che esistono anche intervalli con un estremo aperto ed uno chiuso in questo caso è più opportuno definire un gruppo per gli intervalli con due stili:
 %
 %\begin{verbatim}
-% \defGroupStyle{interval}{tpar}
-% \newgstyledcmd{ccint}[2]{[#1, #2]}
-% \newgstyledcmd{coint}[2]{[#1, #2)}
-% \newgstyledcmd{ocint}[2]{(#1, #2]}
-% \newgstyledcmd{ooint}[2]{(#1, #2)}
+%    \styBeginGroup{interval}
+%      \styBeginStyle{tpar}
+%        \newGstyledcmd{ccint}[2]{[#1, #2]}
+%        \newGstyledcmd{coint}[2]{[#1, #2)}
+%        \newGstyledcmd{ocint}[2]{(#1, #2]}
+%        \newGstyledcmd{ooint}[2]{(#1, #2)}
+%      \styEndStyle
 %
-% \defGroupStyle{interval}{qpar}
-% \newgstyledcmd{ccint}[2]{[#1, #2]}
-% \newgstyledcmd{coint}[2]{[#1, #2[}
-% \newgstyledcmd{ocint}[2]{]#1, #2]}
-% \newgstyledcmd{ooint}[2]{]#1, #2[}
+%      \styBeginStyle{qpar}
+%        \newGstyledcmd{ccint}[2]{[#1, #2]}
+%        \newGstyledcmd{coint}[2]{[#1, #2)}
+%        \newGstyledcmd{ocint}[2]{(#1, #2]}
+%        \newGstyledcmd{ooint}[2]{]#1, #2[}
+%      \styEndStyle
+%    \styEndGroup
 %\end{verbatim}
 %
 %Il package ovviamente è ancora in una fase iniziale, e potrebbero esserci dei bug non ancora risolti. Per qualunque problema contattatemi senza problemi.
@@ -318,21 +354,53 @@
 %\end{macro}
 %
 %\begin{macro}{\__stycmd_gvar:n}
-%Nome della variabile associata al gruppo.
+%Nome della variabile associata al gruppo che memorizza i comandi del gruppo.
 %    \begin{macrocode}
-\cs_new:Npn \__stycmd_gvar:n #1 { l__stycmd_glist_#1_seq }
+\cs_new:Npn \__stycmd_gvar:n #1 { g__stycmd_glist_#1_seq }
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\defGroupStyle}
-%Inizia un gruppo e indica lo stile dei comandi definiti successivamente.
+%\begin{macro}{\__stycmd_gnotclosed:}
+%Messaggio di errore per gruppi innestati
 %    \begin{macrocode}
-\NewDocumentCommand { \defGroupStyle } { m m }
+\msg_new:nnn { stycmd } { gnotclosed } { Group~not~closed }
+
+\cs_new_protected:Npn\__stycmd_gnotclosed:
   {
-    \tl_clear_new:N \l__stycmd_group_tl
+    \msg_error:nnnn { stycmd } { gnotclosed }
+  }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\__stycmd_fnotclosed:}
+%Messaggio di errore per formati innestati
+%    \begin{macrocode}
+\msg_new:nnn { stycmd } { fnotclosed } { Format~not~closed }
+
+\cs_new_protected:Npn \__stycmd_fnotclosed:
+  {
+    \msg_error:nnnn { stycmd } { fnotclosed }
+  }
+%    \end{macrocode}
+%\end{macro}
+%
+%
+%\begin{macro}{\styBeginGroup}
+%Inizia un gruppo di comandi.
+%    \begin{macrocode}
+\NewDocumentCommand \styBeginGroup { m }
+  {
+    \cs_if_exist:NTF \l__stycmd_group_tl
+      {
+        \tl_if_empty:NF \l__stycmd_group_tl
+          {
+            \__stycmd_gnotclosed:
+          }
+      }
+      {
+        \tl_new:N \l__stycmd_group_tl
+      }
     \tl_set:Nn \l__stycmd_group_tl {#1}
-    \tl_clear_new:N \l__stycmd_format_tl
-    \tl_set:Nn \l__stycmd_format_tl {#2}
 
     \seq_if_exist:cF { \__stycmd_gvar:n {#1} }
       { \seq_new:c { \__stycmd_gvar:n {#1} } }
@@ -340,10 +408,50 @@
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\newgstyledcmd}
-%definisce un comando nel gruppo e con lo stile indicato dall'ultimo \tn{defGroupStyle}.
+%\begin{macro}{\styEndGroup}
+%Termina un gruppo di comandi.
 %    \begin{macrocode}
-\NewDocumentCommand \newgstyledcmd { m o +m }
+\NewDocumentCommand \styEndGroup {}
+  {
+    \tl_clear:N \l__stycmd_group_tl
+  }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\styBeginStyle}
+%Inizia un gruppo di stile.
+%    \begin{macrocode}
+\NewDocumentCommand \styBeginStyle { m }
+  {
+    \cs_if_exist:NTF \l__stycmd_format_tl
+      {
+        \tl_if_empty:NF \l__stycmd_format_tl
+          {
+            \__stycmd_fnotclosed:
+          }
+      }
+      {
+        \tl_new:N \l__stycmd_format_tl
+      }
+    \tl_set:Nn \l__stycmd_format_tl {#1}
+  }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\styEndStyle}
+%Termina un gruppo di stile.
+%    \begin{macrocode}
+\NewDocumentCommand \styEndStyle {}
+  {
+    \tl_clear:N \l__stycmd_format_tl
+  }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\newGstyledcmd}
+%Definisce un comando nel gruppo e con lo stile indicato dall'ambiente \verb+stycommands+. Da usare all'interno di \verb+stycommands+.
+%    \begin{macrocode}
+\NewDocumentCommand \newGstyledcmd { m o +m }
   {
     \IfNoValueTF {#2}
       {
@@ -352,7 +460,7 @@
       {
         \newstyledcmd {#1} { \l__stycmd_format_tl } [#2] {#3}
       }
-    \seq_put_left:cn { \__stycmd_gvar:n { \l__stycmd_group_tl } } {#1}
+    \seq_gput_left:cn { \__stycmd_gvar:n { \l__stycmd_group_tl } } {#1}
   }
 %    \end{macrocode}
 %\end{macro}
