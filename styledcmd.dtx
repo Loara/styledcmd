@@ -35,72 +35,67 @@
 %</driver>
 % \fi
 %
-%\newstyledcmd{saluto}{Ciao}[1]{Ciao #1}
-%\newstyledcmd{saluto}{Buongiorno}[1]{Buondì #1}
+%\newstyledcmd{saluto}{informal}[1]{Hi #1}
+%\newstyledcmd{saluto}{formal}[1]{Good morning #1}
 %
 %\newcommand{\thpkg}{\pkg{styledcmd}}
 %
 %\title{styledcmd}
 %\author{Paolo De Donato}
-%\date{}
+%\date{23 August 2021}
 %
 %\maketitle
 %
 %\begin{documentation}
 %
-%\thpkg{} è un package \LaTeX{} che permette di creare e gestire diversi stili per le macro che definisci, in modo da poter scegliere lo stile migliore da utilizzare in ogni occasione senza ogni volta riscrivere il codice da zero.
+%\thpkg{} is a \LaTeX{} package that allows you to create and manage different versions of your macro in order to be able to choose the better style for every occasion and avoid rewriting code each time.
 
-%\section{Come si include nel progetto?}
-%Basta avere il file \verb+styledcmd.sty+ nella cartella principale del proprio progetto oppure copiandolo direttamente nella directory utilizzata dal proprio compilatore \LaTeX{} (\verb+TeXLive+ o \verb+MiKTeX+) per caricare i package necessari. Nel caso vogliate utilizzare il secondo metodo potete trovare la procedura su Internet.
+%\section{How can you include it in your project?}
+%You need only to have the file \verb+styledcmd.sty+ in your current working directory. Otherwise you can manually install it inside your preferred \LaTeX{} compiler (for example \verb+TeXLive+ or \verb+MiKTeX+) in order to make it available for all your projects. Instructions for manually install a package can be found on Internet.
 %
-%In entrambi i casi dovrete poi inserire nel preambolo il comando
-%
+%Then once you've added it you can include in your project with this command:
 %\begin{verbatim}
 % \usepackage{styledcmd}
 %\end{verbatim}
 %
-%\section{Come si usa?}
-%Il pacchetto \thpkg{} permette di creare comandi con più stili associati, che di volta in volta possono essere scelti in base alle esigenze dell'editore.
-%
-%Per creare un comando si usa la macro
+%\section{How do you use it?}
+%You can create a formatted macro via the following command
 %\begin{function}{\newstyledcmd}
 %\begin{syntax}
-%|\newstyledcmd| \marg{nome comando} \marg{nome stile} \oarg{numero argomenti} \marg{codice}
+%|\newstyledcmd| \marg{macro name} \marg{format name} \oarg{number of arguments} \marg{code}
 %\end{syntax}
 %\end{function}
 %
-%Tenendo presente che il nome del nuovo comando non deve avere il \verb+\+ davanti. Si usa il comando per ciascuno stile che si vuole creare, per esempio le istruzioni
+%Notice that the command name mustn't have the \verb+\+ character. You can repeat that command for the same macro in order to create different styles, for example these commands
 %\begin{verbatim}
-%    \newstyledcmd{saluto}{Ciao}[1]{Ciao #1}
-%    \newstyledcmd{saluto}{Buongiorno}[1]{Buondì #1}
+%    \newstyledcmd{saluto}{informal}[1]{Hi #1}
+%    \newstyledcmd{saluto}{formal}[1]{Good morning #1}
 %\end{verbatim}
-%definiscono i due stili \verb+Ciao+ e \verb+Buongiorno+ per il comando \verb+\saluto+. Lo stile utilizzato può essere passato come parametro opzionale del %comando, che altrimenti utilizzerà il primo stile definito. Quindi i comandi
+%define the two formats \verb+informal+ and\verb+formal+ for macro \tn{saluto}. You can directly use the command \tn{saluto} and use the default format (the first declared one) or using a specific style by passing it as an optional argument. So commands
 %\begin{verbatim}
-%    \saluto{zio}
-%    \saluto[Ciao]{zio}
-%    \saluto[Buongiorno]{zio}
+%    \saluto{uncle}
+%    \saluto[informal]{uncle}
+%    \saluto[formal]{uncle}
 %\end{verbatim}
-%ritorneranno rispettivamente \saluto{zio}; \saluto[Ciao]{zio}; \saluto[Buongiorno]{zio}.
+%will be expanded respectively as \saluto{uncle}, \saluto[informal]{uncle}, \saluto[formal]{uncle}.
 %
-%Come si può notare specificando lo stile nel primo parametro opzionale verrà utilizzato esattamente lo stile richiesto, mentre se non viene specificato si utilizzerà invece lo stile di default che corrisponde al primo stile definito per tale carattere.
-%
-%\section{Come si cambia lo stile di default?}
-%Per settare lo stile di default di un particolare comando si usa la macro
+%\section{How do you change the default style?}
+%In order to change the default style (the one used when you don't choose explicitily a format) you need to execute the following command
 %\begin{function}{\setGlobalStyle}
 %\begin{syntax}
-%|\setGlobalStyle| \marg{nome comando} \marg{nuovo stile di default}
+%|\setGlobalStyle| \marg{command name} \marg{new default format name}
 %\end{syntax}
 %\end{function}
-%\setGlobalStyle{saluto}{Buongiorno}
+%\setGlobalStyle{saluto}{formal}
 %
-%Così ad esempio per cambiare lo stile di default del comando \verb+\saluto+ da \verb+Ciao+ a \verb+Buongiorno+ si esegue il comando \verb+\setGlobalStyle{saluto}{Buongiorno}+. Dando questo comando l'output dei comandi precedenti sarà invece \saluto{zio}; \saluto[Ciao]{zio}; \saluto[Buongiorno]{zio}.
+%For example in order to change the default style of command \tn{saluto} from \verb+informal+ to \verb+formal+ you need to execute command \verb+\setGlobalStyle{saluto}{formal}+. With this command the output of preceding commands will instead be \saluto{uncle}, \saluto[informal]{uncle}, \saluto[formal]{uncle}.
 %
-%\section{Personalizzazione dei parametri con \pkg{xparse}}
-%\thpkg{} carica automaticamente il pacchetto \pkg{xparse} per gestire la forma dei parametri. Inoltre è possibile definire nuovi comandi con differenti stili con la stessa sintassi di \tn{NewDocumentCommand} tramite la macro
+%\section{customize parameters with \pkg{xparse}}
+%\thpkg{} loads automatically the \pkg{xparse} package for internal reasons. You can also define new styled commands with the same syntax used by  \tn{NewDocumentCommand} with the following command
 %
 %\begin{function}{\NewDocStyledCMD}
 %\begin{syntax}
-%|\NewDocStyledCMD| \marg{nome comando} \marg{nome stile} \marg{formato argomenti} \marg{codice}
+%|\NewDocStyledCMD| \marg{command name} \marg{format name} \marg{arguments format} \marg{code}
 %\end{syntax}
 %\end{function}
 %
