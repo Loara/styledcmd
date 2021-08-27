@@ -35,8 +35,8 @@
 %</driver>
 % \fi
 %
-%\newstyledcmd{saluto}{informal}[1]{Hi #1}
-%\newstyledcmd{saluto}{formal}[1]{Good morning #1}
+%\newstyledcmd{\saluto}{informal}[1]{Hi #1}
+%\newstyledcmd{\saluto}{formal}[1]{Good morning #1}
 %
 %\newcommand{\thpkg}{\pkg{styledcmd}}
 %
@@ -66,12 +66,12 @@
 %\end{syntax}
 %\end{function}
 %
-%Notice that the command name mustn't have the \verb+\+ character. You can repeat that command for the same macro in order to create different styles, for example these commands
+%You can repeat that command for the same macro in order to create different styles, for example these commands
 %\begin{verbatim}
-%    \newstyledcmd{saluto}{informal}[1]{Hi #1}
-%    \newstyledcmd{saluto}{formal}[1]{Good morning #1}
+%    \newstyledcmd{\saluto}{informal}[1]{Hi #1}
+%    \newstyledcmd{\saluto}{formal}[1]{Good morning #1}
 %\end{verbatim}
-%define the two formats \verb+informal+ and\verb+formal+ for macro \tn{saluto}. You can directly use the command \tn{saluto} and use the default format (the first declared one) or using a specific style by passing it as an optional argument. So commands
+%define the two formats \verb+informal+ and \verb+formal+ for macro \tn{saluto}. You can directly use the command \tn{saluto} and use the default format (the first declared one) or using a specific style by passing it as an optional argument. So commands
 %\begin{verbatim}
 %    \saluto{uncle}
 %    \saluto[informal]{uncle}
@@ -86,11 +86,11 @@
 %|\setGlobalStyle| \marg{command name} \marg{new default format name}
 %\end{syntax}
 %\end{function}
-%\setGlobalStyle{saluto}{formal}
+%\setGlobalStyle{\saluto}{formal}
 %
-%For example in order to change the default style of command \tn{saluto} from \verb+informal+ to \verb+formal+ you need to execute command \verb+\setGlobalStyle{saluto}{formal}+. With this command the output of preceding commands will instead be \saluto{uncle}, \saluto[informal]{uncle}, \saluto[formal]{uncle}.
+%For example in order to change the default style of command \tn{saluto} from \verb+informal+ to \verb+formal+ you need to execute command \verb+\setGlobalStyle{\saluto}{formal}+. With this command the output of preceding commands will instead be \saluto{uncle}, \saluto[informal]{uncle}, \saluto[formal]{uncle}.
 %
-%\section{customize parameters with \pkg{xparse}}
+%\section{Customize parameters with \pkg{xparse}}
 %\thpkg{} loads automatically the \pkg{xparse} package for internal reasons. You can also define new styled commands with the same syntax used by  \tn{NewDocumentCommand} with the following command
 %
 %\begin{function}{\NewDocStyledCMD}
@@ -99,379 +99,442 @@
 %\end{syntax}
 %\end{function}
 %
-%\NewDocStyledCMD{prova}{stilea}{r<>}{Stile 1 #1}
-%\NewDocStyledCMD{prova}{stileb}{r<>}{Stile 2 #1}
-%Possiamo ad esempio creare due stili
+%\NewDocStyledCMD{\prova}{stylea}{r<>}{Stile 1 #1}
+%\NewDocStyledCMD{\prova}{styleb}{r<>}{Stile 2 #1}
+%For example we can create the following two styles
 %\begin{verbatim}
-%     \NewDocStyledCMD{prova}{stilea}{r<>}{Stile 1 #1}
-%     \NewDocStyledCMD{prova}{stileb}{r<>}{Stile 2 #1}
+%     \NewDocStyledCMD{\prova}{stylea}{r<>}{Stile 1 #1}
+%     \NewDocStyledCMD{\prova}{styleb}{r<>}{Stile 2 #1}
 %\end{verbatim}
-%in modo da poter scrivere
+%in order to execute
 %\begin{verbatim}
-%    \prova<ciao>
-%    \prova[stilea]<ciao>
-%    \prova[stileb]<ciao>
+%    \prova<Hello>
+%    \prova[stylea]<Hello>
+%    \prova[styleb]<Hello>
 %\end{verbatim}
-%che saranno rispettivamente equivalenti ad \prova<ciao>; \prova[stilea]<ciao>; \prova[stileb]<ciao>.
+%which are expanded respectively as \prova<Hello>; \prova[stylea]<Hello>; \prova[styleb]<Hello>. Notice that the first optional argument passed to a command defined via \tn{NewDocStyleCMD} will always be interpreted as a style argument, so you should use another syntax for optional arguments or use a mandatory argument for the first place.
+%
+%For example this declaration \verb+\NewDocStyledCMD{\bad}{style}{o m}{Bad declaration}+ should be avoided since for example \verb+\bad[arg1]{arg2}+ will interpret \verb+arg1+ as a style name and not as the first optional argument for \tn{bad}.
 %
 %
-%\section{Gruppi di comandi}
-%Con la versione \verb+2.1+ di \thpkg{} è possibile definire anche gruppi di comandi che condividono un medesimo stile e che quindi un cambiamento dello stile globale deve influenzare tutti i comandi in tale gruppo.
+%\section{Commands group}
+%You can define also a commands group in which defined commands will share the same styles, that allow you to change the style for all commands in that group.
 %
-%Per iniziare un gruppo si utilizza la macro
-%
+%To start a group you have to use the following macro
 %\begin{function}{\styBeginGroup}
 %\begin{syntax}
-%|\styBeginGroup| \marg{nome gruppo}
+%|\styBeginGroup| \marg{group name}
 %\end{syntax}
 %\end{function}
-%che una volta finito di definire i comandi deve essere sempre terminato con la macro
+%any group should be terminated via the following macro
 %\begin{function}{\styEndGroup}
 %\begin{syntax}
 %|\styEndGroup|
 %\end{syntax}
 %\end{function}
 %
-%All'interno di un gruppo i comandi vengono raggruppati in base allo stile. Un blocco di stile deve essere iniziato con la macro
-%
+%In each group commands are grouped toghether according to the used style. So inside a group you can define a style with the command
 %\begin{function}{\styBeginStyle}
 %\begin{syntax}
-%|\styBeginStyle| \marg{nome stile}
+%|\styBeginStyle| \marg{format name}
 %\end{syntax}
 %\end{function}
-%e terminare con
+%and once you've finished to define command with that style you have to close it with the command
 %\begin{function}{\styEndStyle}
 %\begin{syntax}
 %|\styEndStyle|
 %\end{syntax}
 %\end{function}
 %
-%Per definire i comandi all'interno di un gruppo si usa la seguente macro
+%In order to define a command inside a \tn{styBeginStyle} ... \tn{styEndStyle} you can use
 %
 %\begin{function}{\newGstyledcmd}
 %\begin{syntax}
-%|\newGstyledcmd| \marg{nome comando} \oarg{numero argomenti} \marg{codice}
+%|\newGstyledcmd| \marg{command name} \oarg{arguments number} \marg{code}
 %\end{syntax}
 %\end{function}
+%or
+%\begin{function}{\NewGDocStyledCMD}
+%\begin{syntax}
+%|\NewGDocStyledCMD| \marg{command name} \marg{arguments format} \marg{code}
+%\end{syntax}
+%\end{function}
+%if you want to use the \tn{NewDocumentCommand} syntax.
 %
-%con la stessa sintassi di \tn{newstyledcmd} con l'unica differenza che in quest'ultimo caso non deve essere specificato lo stile in quanto già indicato da \tn{styBeginStyle} ... \tn{styEndStyle}. Lo stile predefinito per un gruppo di comandi sarà sempre il primo stile definito all'interno del gruppo, per cambiare lo stile predefinito di un gruppo particolare si utilizza la macro
+%Notice that in this case you mustn't define the style name in \tn{newGstyledcmd} or in \tn{NewGDocStyledCMD} since they use the format defined in the enclosing \tn{styBeginStyle} ... \tn{styEndStyle}. The defined style for a group is the first defined one, in order to change the default format you should use the following macro
 %
 %\begin{function}{\setGroupStyle}
 %\begin{syntax}
-%|\setGroupStyle| \marg{nome gruppo} \marg{nuovo stile di default}
+%|\setGroupStyle| \marg{group name} \marg{new default style}
 %\end{syntax}
 %\end{function}
 %
-%che cambierà poi lo stile di tutti i comandi definiti all'interno del gruppo. È doveroso a questo punto fare almeno un esempio pratico. Consideriamo le seguenti linee di codice LaTeX
+%Consider now the following example
 %
 %    \styBeginGroup{saluti}
-%    \styBeginStyle{formali}
-%    \newGstyledcmd{ciao}[1]{Buongiorno #1}
-%    \newGstyledcmd{via}{Arrivederci}
+%    \styBeginStyle{formal}
+%    \newGstyledcmd{\ciao}[1]{Good morning #1}
+%    \newGstyledcmd{\via}{Goodbye}
 %    \styEndStyle
-%    \styBeginStyle{informali}
-%    \newGstyledcmd{ciao}[1]{Ciao #1}
-%    \newGstyledcmd{via}{Ciaooooo}
+%    \styBeginStyle{informal}
+%    \newGstyledcmd{\ciao}[1]{Hi #1}
+%    \newGstyledcmd{\via}{Catch you later}
 %    \styEndStyle
 %    \styEndGroup
 %
 %\begin{verbatim}
 %    \styBeginGroup{saluti}
-%      \styBeginStyle{formali}
-%        \newGstyledcmd{ciao}[1]{Buongiorno #1}
-%        \newGstyledcmd{via}{Arrivederci}
+%      \styBeginStyle{formal}
+%        \newGstyledcmd{\ciao}[1]{Good morning #1}
+%        \newGstyledcmd{\via}{Goodbye}
 %      \styEndStyle
 %
-%      \styBeginStyle{informali}
-%        \newGstyledcmd{ciao}[1]{Ciao #1}
-%        \newGstyledcmd{via}{Ciaooooo}
-%      \styEndStyle
-%    \styEndGroup
-%\end{verbatim}
-%che definiscono il gruppo \verb+saluti+ con i due stili \verb+formali+ ed \verb+informali+ ed in tale gruppo sono definiti i comandi \tn{ciao} e \tn{via} con entrambi gli stili. Dato che per il gruppo \verb+saluti+ il primo stile ad essere stato definito è \verb+formali+ esso sarà anche lo stile predefinito per il gruppo, quindi i comandi \verb+\ciao{Enrico}+ e \verb+\via+ espanderanno rispettivamente come \ciao{Enrico} e \via{}.
-%
-%Se ora viene lanciato il comando \setGroupStyle{saluti}{informali} \verb+\setGroupStyle{saluti}{informali}+ gli stessi comandi ora espanderanno come \ciao{Enrico} e \via{} in quanto lo stile di default di \verb+saluti+ ora è \verb+informali+.
-%
-%Come per i comandi definiti con \tn{newstyledcmd} anche con quest'ultimi è possibile specificare espressamente lo stile: per esempio \verb+\ciao[formali]{Enrico}+ espanderà come \ciao[formali]{Enrico}.
-%
-%\section{Esempi matematici pratici}
-%In questa sezione daremo alcune applicazioni pratiche di \thpkg{}. Lo scopo iniziale che ha portato alla creazione di questo package nasce dalla necessità di dover scrivere gli stessi concetti matematici in base alla disciplina (o alla rivista nel caso decidessero inverosimilmente di includere questa libreria) scelta. Ogni matematico nel corso del tempo può implementare una propria libreria di macro utili sia per velocizzare la scrittura che per migliorare la leggibilità del codice.
-
-%Si prenda per esempio il seguente codice
-%\begin{verbatim}
-% \int^{\pi/2}_{-\pi/4}\ e^{-x^2}\ d\mathcal{H}^1(x)
-%\end{verbatim}
-%e lo si confronti con
-%\begin{verbatim}
-% \integral[from={-\pi/4}, to={\pi/2}, var=x, meas={\Hms{n-1}}]{e^{-x^2}}
-%\end{verbatim}
-%la seconda riga è chiaramente molto più leggibile rispetto alla prima, ed entrambe porterebbero allo stesso risultato
-%\[
-%\int^{\pi/2}_{-\pi/4}\ e^{-x^2}\ d\mathcal{H}^1(x)
-%\]
-%
-%Uno dei motivi per cui le macro non vengono utilizzate in tutti gli ambiti è l'impedimento di certe riviste che vietano l'utilizzo di macro personalizzate all'interno dei documenti inviati (una soluzione potrebbe essere l'utilizzo globale di uno o più pacchetti di macro con i concetti più comuni disponibile a tutti, comprese le riviste, ma è un'idea irrealizzabile), ma un'altra motivazione è che uno stesso concetto matematico viene rappresentato in maniera diversa in base alla disciplina o anche al singolo individuo. Ed è qui che entra in gioco \thpkg{}.
-
-%\newstyledcmd{obal}{rlow}[2]{B_{#2}({#1})}
-%\newstyledcmd{obal}{rmid}[2]{B({#1}; {#2})}
-
-%Prendiamo il caso semplice di una palla aperta in $\mathbb{R}^n$ centrata in $x$ e di raggio $r$. La forma più utilizzata per rappresentarla è con il raggio in basso $\obal[rlow] xr$ ma certi autori preferiscono inserire il raggio allo stesso livello del centro $\obal[rmid] xr$. Come fa una libreria universale ad accontentare entrambi? Definendo due stili per il comando \tn{obal} nella seguente maniera
-%
-%\begin{verbatim}
-% \newstyledcmd{obal}{rlow}[2]{B_{#2}({#1})}
-% \newstyledcmd{obal}{rmid}[2]{B({#1}; {#2})}
-%\end{verbatim}
-%
-%
-%    \styBeginGroup{interval}
-%    \styBeginStyle{tpar}
-%    \newGstyledcmd{ooint}[2]{(#1, #2)}
-%    \styEndStyle
-%    \styBeginStyle{qpar}
-%    \newGstyledcmd{ooint}[2]{]#1, #2[}
-%    \styEndStyle
-%    \styEndGroup
-%
-%Un altro problema del genere è dato dagli intervalli aperti in $\mathbb R$. Alcuni libri di testo indicano gli intervalli aperti con le parentesi tonde $\ooint ab$ mentre altri preferiscono usare le parentesi quadre rovesciate\setGroupStyle{interval}{qpar} $\ooint ab$. Dato che esistono anche intervalli con un estremo aperto ed uno chiuso in questo caso è più opportuno definire un gruppo per gli intervalli con due stili:
-%
-%\begin{verbatim}
-%    \styBeginGroup{interval}
-%      \styBeginStyle{tpar}
-%        \newGstyledcmd{ccint}[2]{[#1, #2]}
-%        \newGstyledcmd{coint}[2]{[#1, #2)}
-%        \newGstyledcmd{ocint}[2]{(#1, #2]}
-%        \newGstyledcmd{ooint}[2]{(#1, #2)}
-%      \styEndStyle
-%
-%      \styBeginStyle{qpar}
-%        \newGstyledcmd{ccint}[2]{[#1, #2]}
-%        \newGstyledcmd{coint}[2]{[#1, #2)}
-%        \newGstyledcmd{ocint}[2]{(#1, #2]}
-%        \newGstyledcmd{ooint}[2]{]#1, #2[}
+%      \styBeginStyle{informal}
+%        \newGstyledcmd{\ciao}[1]{Hi #1}
+%        \newGstyledcmd{\via}{Catch you later}
 %      \styEndStyle
 %    \styEndGroup
 %\end{verbatim}
+%We've defined the group \verb+saluti+ with two styles: \verb+formal+ and \verb+informal+. In that group are also defined the two commands \tn{ciao} and \tn{via} for both the styles. Since in \verb+saluti+ group the first defined style is \verb+formal+ it'll be also the default style for this group, so commands \verb+\ciao{Enrico}+ and \verb+\via+ will be expanded as \ciao{Enrico} and \via{}.
 %
-%Il package ovviamente è ancora in una fase iniziale, e potrebbero esserci dei bug non ancora risolti. Per qualunque problema contattatemi senza problemi.
+%If now we execute the command \setGroupStyle{saluti}{informal} \verb+\setGroupStyle{saluti}{informal}+ we change the default style to \verb+informal+ so the preceding commands this time will be expanded as \ciao{Enrico} and \via{}.
+%
+%You can also pass an optional argument for the style name you want to use, in particular \verb+\ciao[formal]{Enrico}+ will be always expanded as \ciao[formal]{Enrico}.
+%
 %\end{documentation}
 %
 %\begin{implementation}
 %
-%\section{Implementazione}
-%
-%Questa sezione è solo per i duri e puri.
-%
-%\begin{macro}{\__stycmd_cmd:nn}
-%Nome effettivo di un comando con un particolare stile
+%\section{Implementation}
 %    \begin{macrocode}
-\cs_new:Npn \__stycmd_cmd:nn #1#2{ __stycmd_command_#1_#2 }
+%<*package>
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+%<@@=stycmd>
+%    \end{macrocode}
+%
+%\begin{variable}{\c__stycmd_defname_str}
+%the default style
+%    \begin{macrocode}
+\str_const:Nn \c_@@_defname_str{ default }
+%    \end{macrocode}
+%\end{variable}
+%
+%\begin{variable}{\l__stycmd_cexp_str, \l__stycmd_fexp_str}
+%Temporary variables to store expanded names.
+%    \begin{macrocode}
+\str_new:N \l_@@_cexp_str
+\str_new:N \l_@@_fexp_str
+%    \end{macrocode}
+%\end{variable}
+%
+%\begin{macro}{\__stycmd_cmd:nn, \__stycmd_cmd:nV, \__stycmd_cmd:VV, \__stycmd_cmd:, \__stycmd_cmddefname:n}
+%Name of a command bounded to some style.
+%    \begin{macrocode}
+\cs_new:Npn \__stycmd_cmd:nn #1#2{ @@_command_#1_#2 }
+
+\cs_generate_variant:Nn \@@_cmd:nn { nV }
+\cs_generate_variant:Nn \@@_cmd:nn { VV }
+
+\cs_new:Nn \@@_cmd:
+  {
+    \@@_cmd:VV\l_@@_cexp_str\l_@@_fexp_str
+  }
+
+\cs_new:Npn \@@_cmddefname:n #1
+  {
+    \@@_cmd:nV { #1 } \c_@@_defname_str
+  }
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\__stycmd_erroring:nn}
-%Messaggio di errore per comandi privi del suddetto stile
+%\begin{macro}{\__stycmd_erroring:nn, \__stycmd_erroring:nV}
+%Error messages for undefined styles.
 %    \begin{macrocode}
-\msg_new:nnn { stycmd } { noformat } { Style~#2~not~defined~for~command~#1 }
-
-\cs_new_protected:Npn\__stycmd_erroring:nn #1#2
+\msg_new:nnn { stycmd } { noformat }
   {
-    \cs_if_free:cT { \__stycmd_cmd:nn {#1} {#2} }
+    Style~#2~not~defined~for~command~#1
+  }
+
+\cs_new_protected:Npn\@@_erroring:nn #1#2
+  {
+    \cs_if_free:cT { \@@_cmd:nn {#1} {#2} }
       { \msg_error:nnnn { stycmd } { noformat } {#1} {#2} }
+  }
+
+\cs_generate_variant:Nn \@@_erroring:nn { nV }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\__stycmd_deferr:}
+%Error message when try to create the \verb+default+ style
+%    \begin{macrocode}
+\msg_new:nnn { stycmd } { deferror }
+  {
+    Cannot~define~a~style~with~name~default
+  }
+
+\cs_new_protected:Nn\@@_deferr:
+  {
+    \str_if_eq:NNT \l_@@_fexp_str \c_@@_defname_str
+      { \msg_error:nn { stycmd } { deferror }  }
+  }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\__stycmd_macro_default:nn, \__stycmd_macro_default:VV}
+%Sets the default style to use.
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_macro_default:nn #1#2
+  {
+    \exp_args:Nc \ProvideDocumentCommand { \@@_cmddefname:n { #1 } }
+      {}
+      {
+        \use:c { \@@_cmd:nn { #1 } { #2 } }
+      }
+  }
+
+\cs_generate_variant:Nn \@@_macro_default:nn { VV }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\__stycmd_macro_overwrite:nn, \__stycmd_macro_overwrite:VV}
+%Overwrite the default style.
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_macro_overwrite:nn #1#2
+  {
+    \@@_erroring:nn { #1 } { #2 }
+    \@@_erroring:nV { #1 } \c_@@_defname_str
+
+    \exp_args:Nc \RenewDocumentCommand { \@@_cmddefname:n { #1 } }
+      {}
+      {
+        \use:c { \@@_cmd:nn { #1 } { #2 } }
+      }
+  }
+
+\cs_generate_variant:Nn \@@_macro_overwrite:nn { VV }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\__stycmd_macro_declaration:n, \__stycmd_macro_declaration:V}
+%Declare the effective macro. It'll overwrite existing \tn{l__stycmd_fexp_str}.
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_macro_declaration:n #1
+  {
+    \exp_args:Nc \ProvideDocumentCommand { #1 } {o}
+      {
+        \IfNoValueTF {##1}
+          {
+            \use:c { \@@_cmddefname:n { #1 } }
+          }
+          {
+            \str_set:Nx \l_@@_fexp_str {##1}
+            \@@_erroring:nV { #1 } \l_@@_fexp_str
+            \use:c{ \@@_cmd:nV { #1 } \l_@@_fexp_str }
+          }
+      }
+  }
+
+\cs_generate_variant:Nn \__stycmd_macro_declaration:n { V }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\__stycmd_init_vars:Nn}
+%Initializes system variables. First argument is the command name, second argument should be \verb+x+ expandable.
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_init_vars:Nn #1#2
+  {
+    \str_set:Nx \l_@@_cexp_str { \cs_to_str:N #1 }
+    \str_set:Nx \l_@@_fexp_str {#2}
+    \@@_deferr:
   }
 %    \end{macrocode}
 %\end{macro}
 %
 %\begin{macro}{\newstyledcmd}
-%Definisce una nuova macro con lo stile selezionato.
+%Declare a new macro with the specified style name.
 %    \begin{macrocode}
 \NewDocumentCommand \newstyledcmd { m m o +m }
   {
+    \@@_init_vars:Nn { #1 } { #2 }
     \IfNoValueTF {#3}
       {
-        \exp_args:Nc \newcommand { \__stycmd_cmd:nn {#1} {#2} } {#4}
+        \exp_args:Nc \newcommand { \@@_cmd: } {#4}
       }
       {
-        \exp_args:Nc \newcommand { \__stycmd_cmd:nn {#1} {#2} } [#3] {#4}
+        \exp_args:Nc \newcommand { \@@_cmd: } [#3] {#4}
       }
 
-    \exp_args:Ncc \providecommand { \__stycmd_cmd:nn {#1} {default} }
-      { \__stycmd_cmd:nn {#1} {#2} }
-    
-    \exp_args:Nc \ProvideDocumentCommand {#1} {o}
-      {
-        \IfNoValueTF {##1}
-          {
-            \use:c { \__stycmd_cmd:nn {#1} {default} }
-          }
-          {
-            \__stycmd_erroring:nn {#1} {##1}
-            \use:c{ \__stycmd_cmd:nn {#1} {##1} }
-          }
-      }
+    \@@_macro_default:VV \l_@@_cexp_str \l_@@_fexp_str
+    \@@_macro_declaration:V \l_@@_cexp_str
   }
 %    \end{macrocode}
 %\end{macro}
 %
 %\begin{macro}{\NewDocStyledCMD}
-%Definisce un nuovo comando con lo stile selezionato ma seguendo la sintassi di \tn{NewDocumentCommand}.
+%Declare a new styled macro with the \tn{NewDocumentCommand} syntax.
 %    \begin{macrocode}
 \NewDocumentCommand \NewDocStyledCMD {m m m +m}
   {
-    \exp_args:Nc \NewDocumentCommand
-      { \__stycmd_cmd:nn {#1} {#2} } {#3} {#4}
-    \exp_args:Ncc \providecommand { \__stycmd_cmd:nn {#1} {default} }
-      { \__stycmd_cmd:nn {#1} {#2} }
-    
-    \exp_args:Nc \ProvideDocumentCommand {#1} {o}
-      {
-        \IfNoValueTF{##1}
-          {
-            \use:c{ \__stycmd_cmd:nn {#1} {default} }
-          }
-          {
-            \__stycmd_erroring:nn {#1} {##1}
-            \use:c{ \__stycmd_cmd:nn {#1} {##1} }
-          }
-      }
+    \@@_init_vars:Nn { #1 } { #2 }
+
+    \exp_args:Nc \NewDocumentCommand { \@@_cmd: } {#3} {#4}
+
+    \@@_macro_default:VV \l_@@_cexp_str \l_@@_fexp_str
+    \@@_macro_declaration:V \l_@@_cexp_str
   }
 %    \end{macrocode}
 %\end{macro}
 %
 %\begin{macro}{\setGlobalStyle}
-%Cambia lo stile di default per il comando specificato.
+%Change the default style.
 %    \begin{macrocode}
-\NewDocumentCommand \setGlobalStyle{m m}{%
-    \__stycmd_erroring:nn {#1} {#2}
-    \exp_args:Ncc \renewcommand { \__stycmd_cmd:nn {#1} {default} }
-      { \__stycmd_cmd:nn {#1} {#2} }
+\NewDocumentCommand \setGlobalStyle{m m}{
+    \@@_init_vars:Nn { #1 } { #2 }
+
+    \@@_macro_overwrite:VV \l_@@_cexp_str \l_@@_fexp_str
 }
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\__stycmd_gvar:n}
-%Nome della variabile associata al gruppo che memorizza i comandi del gruppo.
+%\begin{variable}{\l__stycmd_group_str, \l__stycmd_format_str}
+%Variables that stores group and format names.
 %    \begin{macrocode}
-\cs_new:Npn \__stycmd_gvar:n #1 { g__stycmd_glist_#1_seq }
+\str_new:N \l_@@_group_str
+\str_new:N \l_@@_format_str
+%    \end{macrocode}
+%\end{variable}
+%
+%\begin{macro}{\__stycmd_gvar:n, \__stycmd_gvar:V, \__stycmd_gvar:}
+%Group command list.
+%    \begin{macrocode}
+\cs_new:Npn \@@_gvar:n #1 { g_@@_glist_#1_seq }
+
+\cs_generate_variant:Nn \@@_gvar:n { V }
+
+\cs_new:Nn \@@_gvar: { \@@_gvar:V \l_@@_group_str }
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\__stycmd_gnotclosed:}
-%Messaggio di errore per gruppi innestati
+%\begin{macro}{\__stycmd_push_g:Nn, \__stycmd_push_g:NV}
+%Pushes command name inside group command sequence. First argument is command, second is group name
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_push_g:Nn #1#2
+  {
+    \seq_gput_left:cn { \@@_gvar:n { #2 } } { #1 }
+  }
+
+\cs_generate_variant:Nn \@@_push_g:Nn { NV }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\styBeginGroup}
+%Starts a group.
 %    \begin{macrocode}
 \msg_new:nnn { stycmd } { gnotclosed } { Group~not~closed }
 
-\cs_new_protected:Npn\__stycmd_gnotclosed:
-  {
-    \msg_error:nnnn { stycmd } { gnotclosed }
-  }
-%    \end{macrocode}
-%\end{macro}
-%
-%\begin{macro}{\__stycmd_fnotclosed:}
-%Messaggio di errore per formati innestati
-%    \begin{macrocode}
-\msg_new:nnn { stycmd } { fnotclosed } { Format~not~closed }
-
-\cs_new_protected:Npn \__stycmd_fnotclosed:
-  {
-    \msg_error:nnnn { stycmd } { fnotclosed }
-  }
-%    \end{macrocode}
-%\end{macro}
-%
-%
-%\begin{macro}{\styBeginGroup}
-%Inizia un gruppo di comandi.
-%    \begin{macrocode}
 \NewDocumentCommand \styBeginGroup { m }
   {
-    \cs_if_exist:NTF \l__stycmd_group_tl
+    \str_if_empty:NF \l_@@_group_str
       {
-        \tl_if_empty:NF \l__stycmd_group_tl
-          {
-            \__stycmd_gnotclosed:
-          }
+        \msg_error:nn { stycmd } { gnotclosed }
       }
-      {
-        \tl_new:N \l__stycmd_group_tl
-      }
-    \tl_set:Nn \l__stycmd_group_tl {#1}
 
-    \seq_if_exist:cF { \__stycmd_gvar:n {#1} }
-      { \seq_new:c { \__stycmd_gvar:n {#1} } }
+    \str_set:Nx \l_@@_group_str {#1}
+
+    \seq_if_exist:cF { \@@_gvar: }
+      { \seq_new:c { \@@_gvar: } }
   }
 %    \end{macrocode}
 %\end{macro}
 %
 %\begin{macro}{\styEndGroup}
-%Termina un gruppo di comandi.
+%Closes a group.
 %    \begin{macrocode}
 \NewDocumentCommand \styEndGroup {}
   {
-    \tl_clear:N \l__stycmd_group_tl
+    \str_clear:N \l_@@_group_str
   }
 %    \end{macrocode}
 %\end{macro}
 %
 %\begin{macro}{\styBeginStyle}
-%Inizia un gruppo di stile.
+%Starts a style subgroup.
 %    \begin{macrocode}
+\msg_new:nnn { stycmd } { fnotclosed } { Format~not~closed }
+
 \NewDocumentCommand \styBeginStyle { m }
   {
-    \cs_if_exist:NTF \l__stycmd_format_tl
+    \str_if_empty:NF \l_@@_format_str
       {
-        \tl_if_empty:NF \l__stycmd_format_tl
-          {
-            \__stycmd_fnotclosed:
-          }
+        \msg_error:nn { stycmd } { fnotclosed }
       }
-      {
-        \tl_new:N \l__stycmd_format_tl
-      }
-    \tl_set:Nn \l__stycmd_format_tl {#1}
+    \str_set:Nx \l_@@_format_str {#1}
   }
 %    \end{macrocode}
 %\end{macro}
 %
 %\begin{macro}{\styEndStyle}
-%Termina un gruppo di stile.
+%Closes a style subgroup.
 %    \begin{macrocode}
 \NewDocumentCommand \styEndStyle {}
   {
-    \tl_clear:N \l__stycmd_format_tl
+    \str_clear:N \l_@@_format_str
   }
 %    \end{macrocode}
 %\end{macro}
 %
 %\begin{macro}{\newGstyledcmd}
-%Definisce un comando nel gruppo e con lo stile indicato dall'ambiente \verb+stycommands+. Da usare all'interno di \verb+stycommands+.
+%Declare a command inside a styled group.
 %    \begin{macrocode}
 \NewDocumentCommand \newGstyledcmd { m o +m }
   {
     \IfNoValueTF {#2}
       {
-        \newstyledcmd {#1} { \l__stycmd_format_tl } {#3}
+        \newstyledcmd {#1} { \l_@@_format_str } {#3}
       }
       {
-        \newstyledcmd {#1} { \l__stycmd_format_tl } [#2] {#3}
+        \newstyledcmd {#1} { \l_@@_format_str } [#2] {#3}
       }
-    \seq_gput_left:cn { \__stycmd_gvar:n { \l__stycmd_group_tl } } {#1}
+    \@@_push_g:NV {#1} \l_@@_group_str
+  }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\NewGDocStyledCMD}
+%Equivalent of \tn{NewDocStyledCMD} for command defined in a group.
+%    \begin{macrocode}
+\NewDocumentCommand \NewGDocStyledCMD { m m +m }
+  {
+    \NewDocStyledCMD {#1} { \l_@@_format_str } {#2} {#3}
+
+    \@@_push_g:NV {#1} \l_@@_group_str
   }
 %    \end{macrocode}
 %\end{macro}
 %
 %\begin{macro}{\setGroupStyle}
-%Cambia lo stile di default del gruppo selezionato.
+%Change the default style for a group.
 %    \begin{macrocode}
 \NewDocumentCommand \setGroupStyle { m m }
   {
-    \seq_map_inline:cn { \__stycmd_gvar:n {#1} }
+    \str_set:Nx \l_@@_group_str {#1}
+    \str_set:Nx \l_@@_format_str {#2}
+    \seq_map_inline:cn { \@@_gvar: }
       {
-        \setGlobalStyle {##1} {#2}
+        \setGlobalStyle {##1} { \l_@@_format_str }
       }
+    \str_clear:N \l_@@_format_str
+    \str_clear:N \l_@@_group_str
   }
 %    \end{macrocode}
 %\end{macro}
+%
+%    \begin{macrocode}
+%</package>
+%    \end{macrocode}
 %
 %\end{implementation}
 %
