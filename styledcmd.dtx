@@ -305,7 +305,6 @@
 \cs_new_protected:Npn \@@_macro_overwrite:nn #1#2
   {
     \@@_erroring:nn { #1 } { #2 }
-    \@@_erroring:nV { #1 } \c_@@_defname_str
 
     \exp_args:Nc \RenewDocumentCommand { \@@_cmddefname:n { #1 } }
       {}
