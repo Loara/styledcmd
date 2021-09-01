@@ -22,11 +22,11 @@
 %
 % \iffalse
 %<*driver>
-\ProvidesFile{styledcmd.dtx}[2021/08/20 1.0 Command with different styles]
+\ProvidesFile{styledcmd.dtx}[2021/08/20 1.1 Command with different styles]
 %</driver>
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\RequirePackage{expl3}[2018-04-12]
-%<package>\ProvidesExplPackage{styledcmd}{2021/08/20}{1.0}{Command with different styles}
+%<package>\ProvidesExplPackage{styledcmd}{2021/08/20}{1.1}{Command with different styles}
 %<package>\RequirePackage{xparse}
 %<*driver>
 \documentclass[full]{l3doc}
@@ -62,7 +62,7 @@
 %
 %\section{How do you use it?}
 %You can create a formatted macro via the following command
-%\begin{function}{\newstyledcmd}
+%\begin{function}{\newstyledcmd, \renewstyledcmd, \providestyledcmd}
 %\begin{syntax}
 %|\newstyledcmd| \marg{macro name} \marg{format name} \oarg{number of arguments} \marg{code}
 %\end{syntax}
@@ -79,7 +79,7 @@
 %    \saluto[informal]{uncle}
 %    \saluto[formal]{uncle}
 %\end{verbatim}
-%will be expanded respectively as \saluto{uncle}, \saluto[informal]{uncle}, \saluto[formal]{uncle}.
+%will be expanded respectively as \saluto{uncle}, \saluto[informal]{uncle}, \saluto[formal]{uncle}. With the same syntax you can use \tn{renewstyledcmd} and \tn{providestyledcmd} with the same meaning of \tn{renewcommand} and \tn{providecommand} respectively.
 %
 %\section{How do you change the default style?}
 %In order to change the default style (the one used when you don't choose explicitily a format) you need to execute the following command
@@ -95,7 +95,7 @@
 %\section{Customize parameters with \pkg{xparse}}
 %\thpkg{} loads automatically the \pkg{xparse} package for internal reasons. You can also define new styled commands with the same syntax used by  \tn{NewDocumentCommand} with the following command
 %
-%\begin{function}{\NewDocStyledCMD}
+%\begin{function}{\NewDocStyledCMD, \RenewDocStyledCMD, \ProvideDocStyledCMD}
 %\begin{syntax}
 %|\NewDocStyledCMD| \marg{command name} \marg{format name} \marg{arguments format} \marg{code}
 %\end{syntax}
@@ -203,6 +203,28 @@
 %
 %You can also pass an optional argument for the style name you want to use, in particular \verb+\ciao[formal]{Enrico}+ will be always expanded as \ciao[formal]{Enrico}.
 %
+%\section{Generate more styled commands}
+%Suppose now that you've created your own version of \tn{newcommand} or \tn{NewDocumentCommand} in order to generate some classes of commands. Suppose that your function name is \tn{mynewcommand} and it accepts, like \tn{newcommand}, the new macro as its first argument. Then you can create styled commands with your own macro by using this function
+%\begin{function}{\stycmd_generate:NN, \stycmd_generate_renew:NN}
+%\begin{syntax}
+%|\stycmd_generate:NN| \meta{new generator name} \meta{generator name}
+%\end{syntax}
+%\end{function}
+%So for example executing
+%\begin{verbatim}
+% \stycmd_generate:NN\mynewstyledcommand\mynewcommand
+%\end{verbatim}
+%you'll create the new macro \tn{mynewstyledcommand} that accepts the command you want to define as first argument, the style you want to use as second argument and the remaining arguments are the same needed by \tn{mynewcommand}.
+%
+%Notice that \tn{newstyledcmd} is defined internally as
+%\begin{verbatim}
+% \stycmd_generate:NN \newstyledcmd \newcommand
+%\end{verbatim}
+%
+%Notice that \tn{mynewcommand} first argument has to be the macro you want to define, otherwise \cs{stycmd_generate:NN} will have undefined behaviour. The \cs{stycmd_generate_renew:NN} function should be used only for ''renew`` type commands that requires a preceding declaration, like \tn{renewcommand} and \tn{RenewDocumentCommand}.
+%
+%Actually there isn't any analogue proceeding for defining customized versions for \tn{newGstyledcmd} and \tn{NewGDocStyledCMD}.
+%
 %\end{documentation}
 %
 %\begin{implementation}
@@ -251,7 +273,7 @@
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\__stycmd_erroring:nn, \__stycmd_erroring:nV}
+%\begin{macro}{\__stycmd_erroring:nn, \__stycmd_erroring:nV, \__stycmd_erroring:VV}
 %Error messages for undefined styles.
 %    \begin{macrocode}
 \msg_new:nnn { stycmd } { noformat }
@@ -265,7 +287,7 @@
       { \msg_error:nnnn { stycmd } { noformat } {#1} {#2} }
   }
 
-\cs_generate_variant:Nn \@@_erroring:nn { nV }
+\cs_generate_variant:Nn \@@_erroring:nn { nV, VV }
 %    \end{macrocode}
 %\end{macro}
 %
@@ -302,7 +324,7 @@
 %\end{macro}
 %
 %\begin{macro}{\__stycmd_macro_overwrite:nn, \__stycmd_macro_overwrite:VV}
-%Overwrite the default style.
+%Overwrite the default style, not the command associated to that style.
 %    \begin{macrocode}
 \cs_new_protected:Npn \@@_macro_overwrite:nn #1#2
   {
@@ -354,38 +376,47 @@
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\newstyledcmd}
-%Declare a new macro with the specified style name.
+%\begin{macro}{\stycmd_generate:NN, \stycmd_generate_renew:NN}
+%Declare the styled version \verb+#1+ of the macro generator command \verb+#2+. the \verb+_renew+ variant requires a preceding declaration
 %    \begin{macrocode}
-\NewDocumentCommand \newstyledcmd { m m o +m }
+\cs_new_protected:Npn \stycmd_generate:NN #1#2
   {
-    \@@_init_vars:Nn { #1 } { #2 }
-    \IfNoValueTF {#3}
+    \NewDocumentCommand #1 {m m}
       {
-        \exp_args:Nc \newcommand { \@@_cmd: } {#4}
+        \@@_init_vars:Nn { ##1 } { ##2 }
+        \@@_macro_default:VV \l_@@_cexp_str \l_@@_fexp_str
+        \@@_macro_declaration:V \l_@@_cexp_str
+        \exp_args:Nc #2 { \@@_cmd: }
       }
-      {
-        \exp_args:Nc \newcommand { \@@_cmd: } [#3] {#4}
-      }
+  }
 
-    \@@_macro_default:VV \l_@@_cexp_str \l_@@_fexp_str
-    \@@_macro_declaration:V \l_@@_cexp_str
+\cs_new_protected:Npn \stycmd_generate_renew:NN #1#2
+  {
+    \NewDocumentCommand #1 {m m}
+      {
+        \@@_init_vars:Nn { ##1 } { ##2 }
+        \@@_erroring:VV \l_@@_cexp_str \l_@@_fexp_str
+        \exp_args:Nc #2 { \@@_cmd: }
+      }
   }
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\NewDocStyledCMD}
+%\begin{macro}{\newstyledcmd, \renewstyledcmd, \providestyledcmd}
+%Declare a new macro with the specified style name.
+%    \begin{macrocode}
+\stycmd_generate:NN \newstyledcmd \newcommand
+\stycmd_generate_renew:NN \renewstyledcmd \renewcommand
+\stycmd_generate:NN \providestyledcmd \providecommand
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\NewDocStyledCMD, \RenewDocStyledCMD, \ProvideDocStyledCMD}
 %Declare a new styled macro with the \tn{NewDocumentCommand} syntax.
 %    \begin{macrocode}
-\NewDocumentCommand \NewDocStyledCMD {m m m +m}
-  {
-    \@@_init_vars:Nn { #1 } { #2 }
-
-    \exp_args:Nc \NewDocumentCommand { \@@_cmd: } {#3} {#4}
-
-    \@@_macro_default:VV \l_@@_cexp_str \l_@@_fexp_str
-    \@@_macro_declaration:V \l_@@_cexp_str
-  }
+\stycmd_generate:NN \NewDocStyledCMD \NewDocumentCommand
+\stycmd_generate_renew:NN \RenewDocStyledCMD \RenewDocumentCommand
+\stycmd_generate:NN \ProvideDocStyledCMD \ProvideDocumentCommand
 %    \end{macrocode}
 %\end{macro}
 %
