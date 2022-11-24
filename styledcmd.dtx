@@ -65,16 +65,19 @@
 %You can create a formatted macro via the following command
 %\begin{function}{\newstyledcmd, \renewstyledcmd, \providestyledcmd}
 %\begin{syntax}
-%|\newstyledcmd| \marg{macro name} \marg{format name} \oarg{number of arguments} \marg{code}
+%\tn{newstyledcmd} \{\tn{\meta{macro name}}\} \marg{style name} \oarg{number of arguments} \marg{code}
 %\end{syntax}
+%it has the same syntax of \tn{newcommand} except for the \meta{style name} argument that specify the style. This macro alone creates commands \tn{\meta{macro name}} and \tn{\meta{macro name}}\oarg{style name} that both expand as \meta{code}.
 %\end{function}
 %
-%You can repeat that command for the same macro in order to create different styles, for example these commands
+%The most important feature is that you can call \tn{newstyledcmd} multiple times with the same \meta{macro name} but different \meta{style name}, in this way each of \tn{\meta{macro name}}\oarg{style name} expands to \meta{code} associated to specified \meta{style name}. Notice that if you don't specify a style with just calling \tn{meta{macro name}} then it expands as the first created style, that style is the \emph{default} one for such command.
+%
+%As an example these commands
 %\begin{verbatim}
 %    \newstyledcmd{\saluto}{informal}[1]{Hi #1}
 %    \newstyledcmd{\saluto}{formal}[1]{Good morning #1}
 %\end{verbatim}
-%define the two formats \verb+informal+ and \verb+formal+ for macro \tn{saluto}. You can directly use the command \tn{saluto} and use the default format (the first declared one) or using a specific style by passing it as an optional argument. So commands
+%define the two formats \verb+informal+ and \verb+formal+ for macro \tn{saluto}. Once you've created these two styles for \tn{saluto} you can use it with or without the style name argument, for example these commands
 %\begin{verbatim}
 %    \saluto{uncle}
 %    \saluto[informal]{uncle}
@@ -83,22 +86,22 @@
 %will be expanded respectively as \saluto{uncle}, \saluto[informal]{uncle}, \saluto[formal]{uncle}. With the same syntax you can use \tn{renewstyledcmd} and \tn{providestyledcmd} with the same meaning of \tn{renewcommand} and \tn{providecommand} respectively.
 %
 %\section{How do you change the default style?}
-%In order to change the default style (the one used when you don't choose explicitily a format) you need to execute the following command
+%In order to change the default style (the one used when you don't choose explicitily a style) you need to execute the following command
 %\begin{function}{\setGlobalStyle}
 %\begin{syntax}
-%|\setGlobalStyle| \marg{command name} \marg{new default format name}
+%\tn{setGlobalStyle} \{\cs{\meta{command name}}\} \marg{new default style name}
 %\end{syntax}
 %\end{function}
 %\setGlobalStyle{\saluto}{formal}
 %
-%For example in order to change the default style of command \tn{saluto} from \verb+informal+ to \verb+formal+ you need to execute command \verb+\setGlobalStyle{\saluto}{formal}+. With this command the output of preceding commands will instead be \saluto{uncle}, \saluto[informal]{uncle}, \saluto[formal]{uncle}.
+%For example in order to change the default style of command \tn{saluto} from \verb+informal+ to \verb+formal+ you need to execute command \tn{setGlobalStyle}\{\cs{saluto}\}\{\verb+formal+\}. With this command the output of preceding commands will instead be \saluto{uncle}, \saluto[informal]{uncle}, \saluto[formal]{uncle}.
 %
 %\section{Customize parameters with \pkg{xparse}}
 %\thpkg{} loads automatically the \pkg{xparse} package for internal reasons. You can also define new styled commands with the same syntax used by  \tn{NewDocumentCommand} with the following command
 %
 %\begin{function}{\NewDocStyledCMD, \RenewDocStyledCMD, \ProvideDocStyledCMD}
 %\begin{syntax}
-%|\NewDocStyledCMD| \marg{command name} \marg{format name} \marg{arguments format} \marg{code}
+%\tn{NewDocStyledCMD} \marg{command name} \marg{format name} \marg{arguments format} \marg{code}
 %\end{syntax}
 %\end{function}
 %
@@ -115,10 +118,62 @@
 %    \prova[stylea]<Hello>
 %    \prova[styleb]<Hello>
 %\end{verbatim}
-%which are expanded respectively as \prova<Hello>; \prova[stylea]<Hello>; \prova[styleb]<Hello>. Notice that the first optional argument passed to a command defined via \tn{NewDocStyleCMD} will always be interpreted as a style argument, so you should use another syntax for optional arguments or use a mandatory argument for the first place.
+%which are expanded respectively as \prova<Hello>; \prova[stylea]<Hello>; \prova[styleb]<Hello>. Notice that the first optional argument passed to a command defined via \tn{NewDocStyledCMD} will always be interpreted as a style argument, so you should use another syntax for optional arguments or use a mandatory argument for the first place.
 %
 %For example this declaration \verb+\NewDocStyledCMD{\bad}{style}{o m}{Bad declaration}+ should be avoided since for example \verb+\bad[arg1]{arg2}+ will interpret \verb+arg1+ as a style name and not as the first optional argument for \tn{bad}.
 %
+%\section{Expandable commands}
+%Coomands created by \tn{newstyledcmd} doesn't work very well in expansion only context due to the presence of optional style argument. In order to be able to create expandable commands you should instead use
+%
+%\begin{function}{\newstyledcmdExp, \renewstyledcmdExp, \providestyledcmdExp}
+%\begin{syntax}
+%\tn{newstyledcmdExp} \{\tn{\meta{macro name}}\} \marg{style name} \oarg{number of arguments} \marg{code}
+%\end{syntax}
+%\end{function}
+% Despite commands created with \tn{newstyledcmd} the style name of commands created by \tn{newstyledcmdExp} are always mandatory and must be passed inside curly braces. In order to use the default style just pass an empty string as style name.
+%
+% For example this code
+%\begin{verbatim}
+%    \newstyledcmdExp{\expCMD}{sty1}{Style 1}
+%    \newstyledcmdExp{\expCMD}{sty2}{Style 2}
+%
+%    \expCMD{}
+%    \expCMD{sty1}
+%    \expCMD{sty2}
+%\end{verbatim}
+%expand as \newstyledcmdExp{\expCMD}{sty1}{Style 1}\newstyledcmdExp{\expCMD}{sty2}{Style 2} \expCMD{} \expCMD{sty1} \expCMD{sty2}
+%
+%\section{Advanced usage}
+%If \tn{newstyledcmd}, \tn{NewDocStyledCMD} and \tn{newstyledcmdExp} aren't suitable for you it's possible to create a custom styled command generator, but we first need to know a bit of the internal structure of \thpkg.
+%
+% What you see as a styled command it's instead a collection of different macros:
+% \begin{itemize}
+%    \item multiple \emph{effective styled commands} (\emph{ES commands}), one for each style;
+%    \item a single \emph{dispatch command} that's called by the user and expands to the specified ES command.
+% \end{itemize}
+%
+% \begin{function}{\stycmd_generate:NNN}
+%  \begin{syntax}
+%  \cs{stycmd_generate:NNN} \meta{generator name} \meta{ES commands generator} \meta{dispatch command generator}
+%  \end{syntax}
+%  Creates a generator of styled commands with name \meta{generator name}. Argument \meta{ES commands generator} is used to create ES commands and should accept a macro name as the first argument, but there aren't other restrictions on remaining arguments. Suitable ES commands generators are \tn{newcommand} and \tn{NewDocumentCommand}.
+% \end{function}
+%
+% Argument \meta{dispatch command generator} should generate the dispatch command. Despite \meta{ES commands generator} this command must have only one parameter, a string representing the command to be created. Suitable values for this parameter are:
+%
+% \begin{function}{\stycmd_xparsecmd:n}
+%  \begin{syntax}
+%   \cs{stycmd_xparsecmd:n} \marg{command name string}
+%  \end{syntax}
+%  Creates the dispatch command with \tn{ProvideDocumentCommand} with optional style name parameter (used in \tn{newstyledcmd} and \tn{NewDocStyledCMD}).
+%\end{function}
+%
+%\begin{function}{\stycmd_expcmd:n}
+% \begin{syntax}
+%   \cs{stycmd_expcmd:n} \marg{command name string}
+% \end{syntax}
+% Creates the dispatch command with \tn{providecommand} with mandatory style name parameter (used in \tn{newstyledcmdExp}).
+%\end{function}
 %
 %\end{documentation}
 %
@@ -211,49 +266,8 @@
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\stycmd_pcmcmd:n}
-% Defines the main macro with \cs{providecommand}.
-%    \begin{macrocode}
-
-\cs_new_protected:Nn \@@_pcmcmd_aux:Nn
-  {
-    \providecommand { #1 } [1] []
-      {
-        \tl_if_empty:nTF {##1}
-          {
-            \object_member_use:nn
-              {
-                \@@_cmd:n{ #2 }
-              }
-              {
-                default
-              }
-          }
-          {
-            \object_member_use:nnn
-              {
-                \@@_cmd:n{ #2 }
-              }
-              {
-                cmd - ##1
-              }
-              { stycmd_void }
-          }
-      }
-  }
-
-\cs_generate_variant:Nn \@@_pcmcmd_aux:Nn { cn }
-
-\cs_new_protected:Nn \stycmd_pcmcmd:n
-  {
-    \@@_pcmcmd_aux:cn { #1 }{ #1 }
-  }
-
-%    \end{macrocode}
-%\end{macro}
-%
 %\begin{macro}{\stycmd_expcmd:n}
-% Defines the main macro with \cs{providecommand} but the style argument is mandatory in order to make the command expandable. To use default style pass an empty argument as style.
+% Defines the main macro with \tn{providecommand} but the style argument is mandatory in order to make the command expandable. To use default style pass an empty argument as style.
 %    \begin{macrocode}
 
 \cs_new_protected:Nn \@@_expcmd_aux:Nn
@@ -452,6 +466,15 @@
 \stycmd_generate:NN \NewDocStyledCMD \NewDocumentCommand
 \stycmd_generate_renew:NN \RenewDocStyledCMD \RenewDocumentCommand
 \stycmd_generate:NN \ProvideDocStyledCMD \ProvideDocumentCommand
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\newstyledcmdExp, \renewstyledcmdExp, \providestyledcmdExp}
+%Declare a new macro with the specified style name.
+%    \begin{macrocode}
+\stycmd_generate:NNN \newstyledcmdExp \newcommand \stycmd_expcmd:n
+\stycmd_generate_renew:NN \renewstyledcmdExp \renewcommand
+\stycmd_generate:NNN \providestyledcmdExp \providecommand \stycmd_expcmd:n
 %    \end{macrocode}
 %\end{macro}
 %
