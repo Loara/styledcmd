@@ -22,11 +22,12 @@
 %
 % \iffalse
 %<*driver>
-\ProvidesFile{styledcmd.dtx}[2021/08/20 1.1 Command with different styles]
+\ProvidesFile{styledcmd.dtx}[2022/08/03 1.2 Command with different styles]
 %</driver>
 %<package>\NeedsTeXFormat{LaTeX2e}
-%<package>\RequirePackage{expl3}[2018-04-12]
-%<package>\ProvidesExplPackage{styledcmd}{2021/08/20}{1.1}{Command with different styles}
+%<package>\RequirePackage{expl3}[2022-07-15]
+%<package>\ProvidesExplPackage{styledcmd}{2022/08/03}{1.2}{Command with different styles}
+%<package>\RequirePackage{lt3rawobject}
 %<package>\RequirePackage{xparse}
 %<*driver>
 \documentclass[full]{l3doc}
@@ -44,7 +45,7 @@
 %
 %\title{styledcmd}
 %\author{Paolo De Donato}
-%\date{23 August 2021}
+%\date{03 August 2022}
 %
 %\maketitle
 %
@@ -238,42 +239,44 @@
 %<@@=stycmd>
 %    \end{macrocode}
 %
-%\begin{variable}{\c__stycmd_defname_str}
-%the default style
+%\begin{variable}{\c_@@_cmdproxy_str}
+%Proxy used to generate styled commands
 %    \begin{macrocode}
-\str_const:Nn \c_@@_defname_str{ default }
+\str_const:Nx \c_@@_cmdproxy_str { \object_address:nn
+    { stycmd }{ proxy } }
+
+\proxy_create:nnN { stycmd }{ proxy } \c_object_public_str
+\proxy_push_member:Vnn \c_@@_cmdproxy_str { default }{ tl }
+
 %    \end{macrocode}
 %\end{variable}
 %
-%\begin{variable}{\l__stycmd_cexp_str, \l__stycmd_fexp_str}
-%Temporary variables to store expanded names.
-%    \begin{macrocode}
-\str_new:N \l_@@_cexp_str
-\str_new:N \l_@@_fexp_str
-%    \end{macrocode}
-%\end{variable}
-%
-%\begin{macro}{\__stycmd_cmd:nn, \__stycmd_cmd:nV, \__stycmd_cmd:VV, \__stycmd_cmd:, \__stycmd_cmddefname:n}
+%\begin{macro}{\@@_cmd:n, \@@_cmd_style:nn, \@@_cmd_default:n}
 %Name of a command bounded to some style.
 %    \begin{macrocode}
-\cs_new:Npn \__stycmd_cmd:nn #1#2{ @@_command_#1_#2 }
-
-\cs_generate_variant:Nn \@@_cmd:nn { nV }
-\cs_generate_variant:Nn \@@_cmd:nn { VV }
-
-\cs_new:Nn \@@_cmd:
+\cs_new:Nn \@@_cmd:n
   {
-    \@@_cmd:VV\l_@@_cexp_str\l_@@_fexp_str
+    \object_address:nn{ stycmd }{ entity - #1 }
   }
 
-\cs_new:Npn \@@_cmddefname:n #1
+\cs_new:Nn \@@_cmd_style:nn
   {
-    \@@_cmd:nV { #1 } \c_@@_defname_str
+    \object_member_adr:nnn{ \@@_cmd:n{ #1 } }{ cmd - #2 }
+      { stycmd_void }
   }
+
+\cs_new:Nn \stycmd_void_use:N { #1 }
+\cs_new_eq:NN \stycmd_void_use:c \use:c
+
+\cs_new:Nn \@@_cmd_default:n
+  {
+    \object_member_adr:nn{ \@@_cmd:n{ #1 } } { default }
+  }
+
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\__stycmd_erroring:nn, \__stycmd_erroring:nV, \__stycmd_erroring:VV}
+%\begin{macro}{\__stycmd_erroring:nn}
 %Error messages for undefined styles.
 %    \begin{macrocode}
 \msg_new:nnn { stycmd } { noformat }
@@ -287,118 +290,204 @@
       { \msg_error:nnnn { stycmd } { noformat } {#1} {#2} }
   }
 
-\cs_generate_variant:Nn \@@_erroring:nn { nV, VV }
+\msg_new:nnn { stycmd } { format }
+  {
+    Style~#2~already~defined~for~command~#1
+  }
+
+\cs_new_protected:Npn\@@_ferroring:nn #1#2
+  {
+    \cs_if_exist:cT { \@@_cmd:nn {#1} {#2} }
+      { \msg_error:nnnn { stycmd } { format } {#1} {#2} }
+  }
+
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\__stycmd_deferr:}
-%Error message when try to create the \verb+default+ style
+%\begin{macro}{\stycmd_xparsecmd:n}
+% Defines the main macro with \cs{ProvideDocumentCommand}.
 %    \begin{macrocode}
-\msg_new:nnn { stycmd } { deferror }
-  {
-    Cannot~define~a~style~with~name~default
-  }
 
-\cs_new_protected:Nn\@@_deferr:
+\cs_new_protected:Nn \@@_xparsecmd_aux:Nn
   {
-    \str_if_eq:NNT \l_@@_fexp_str \c_@@_defname_str
-      { \msg_error:nn { stycmd } { deferror }  }
-  }
-%    \end{macrocode}
-%\end{macro}
-%
-%\begin{macro}{\__stycmd_macro_default:nn, \__stycmd_macro_default:VV}
-%Sets the default style to use.
-%    \begin{macrocode}
-\cs_new_protected:Npn \@@_macro_default:nn #1#2
-  {
-    \exp_args:Nc \ProvideDocumentCommand { \@@_cmddefname:n { #1 } }
-      {}
-      {
-        \use:c { \@@_cmd:nn { #1 } { #2 } }
-      }
-  }
-
-\cs_generate_variant:Nn \@@_macro_default:nn { VV }
-%    \end{macrocode}
-%\end{macro}
-%
-%\begin{macro}{\__stycmd_macro_overwrite:nn, \__stycmd_macro_overwrite:VV}
-%Overwrite the default style, not the command associated to that style.
-%    \begin{macrocode}
-\cs_new_protected:Npn \@@_macro_overwrite:nn #1#2
-  {
-    \@@_erroring:nn { #1 } { #2 }
-
-    \exp_args:Nc \RenewDocumentCommand { \@@_cmddefname:n { #1 } }
-      {}
-      {
-        \use:c { \@@_cmd:nn { #1 } { #2 } }
-      }
-  }
-
-\cs_generate_variant:Nn \@@_macro_overwrite:nn { VV }
-%    \end{macrocode}
-%\end{macro}
-%
-%\begin{macro}{\__stycmd_macro_declaration:n, \__stycmd_macro_declaration:V}
-%Declare the effective macro. It'll overwrite existing \tn{l__stycmd_fexp_str}.
-%    \begin{macrocode}
-\cs_new_protected:Npn \@@_macro_declaration:n #1
-  {
-    \exp_args:Nc \ProvideDocumentCommand { #1 } {o}
+    \ProvideDocumentCommand { #1 } { o }
       {
         \IfNoValueTF {##1}
           {
-            \use:c { \@@_cmddefname:n { #1 } }
+            \object_member_use:nn
+              {
+                \@@_cmd:n{ #2 }
+              }
+              {
+                default
+              }
           }
           {
-            \str_set:Nx \l_@@_fexp_str {##1}
-            \@@_erroring:nV { #1 } \l_@@_fexp_str
-            \use:c{ \@@_cmd:nV { #1 } \l_@@_fexp_str }
+            \@@_erroring:nn { #2 } { ##1 }
+            \object_member_use:nnn
+              {
+                \@@_cmd:n{ #2 }
+              }
+              {
+                cmd - ##1
+              }
+              { stycmd_void }
           }
       }
   }
 
-\cs_generate_variant:Nn \__stycmd_macro_declaration:n { V }
-%    \end{macrocode}
-%\end{macro}
-%
-%\begin{macro}{\__stycmd_init_vars:Nn}
-%Initializes system variables. First argument is the command name, second argument should be \verb+x+ expandable.
-%    \begin{macrocode}
-\cs_new_protected:Npn \@@_init_vars:Nn #1#2
+\cs_generate_variant:Nn \@@_xparsecmd_aux:Nn { cn }
+
+\cs_new_protected:Nn \stycmd_xparsecmd:n
   {
-    \str_set:Nx \l_@@_cexp_str { \cs_to_str:N #1 }
-    \str_set:Nx \l_@@_fexp_str {#2}
-    \@@_deferr:
+    \@@_xparsecmd_aux:cn { #1 }{ #1 }
   }
+
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\stycmd_generate:NN, \stycmd_generate_renew:NN}
-%Declare the styled version \verb+#1+ of the macro generator command \verb+#2+. the \verb+_renew+ variant requires a preceding declaration
+%\begin{macro}{\stycmd_pcmcmd:n}
+% Defines the main macro with \cs{providecommand}.
 %    \begin{macrocode}
-\cs_new_protected:Npn \stycmd_generate:NN #1#2
+
+\cs_new_protected:Nn \@@_pcmcmd_aux:Nn
   {
-    \NewDocumentCommand #1 {m m}
+    \providecommand { #1 } [1] []
       {
-        \@@_init_vars:Nn { ##1 } { ##2 }
-        \@@_macro_default:VV \l_@@_cexp_str \l_@@_fexp_str
-        \@@_macro_declaration:V \l_@@_cexp_str
-        \exp_args:Nc #2 { \@@_cmd: }
+        \tl_if_empty:nTF {##1}
+          {
+            \object_member_use:nn
+              {
+                \@@_cmd:n{ #2 }
+              }
+              {
+                default
+              }
+          }
+          {
+            \object_member_use:nnn
+              {
+                \@@_cmd:n{ #2 }
+              }
+              {
+                cmd - ##1
+              }
+              { stycmd_void }
+          }
       }
   }
 
-\cs_new_protected:Npn \stycmd_generate_renew:NN #1#2
+\cs_generate_variant:Nn \@@_pcmcmd_aux:Nn { cn }
+
+\cs_new_protected:Nn \stycmd_pcmcmd:n
   {
-    \NewDocumentCommand #1 {m m}
+    \@@_pcmcmd_aux:cn { #1 }{ #1 }
+  }
+
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\stycmd_generate:NNN, \stycmd_generate:NN,  \stycmd_generate_renew:NN}
+%Declare the styled version \verb+#1+ of the macro generator command \verb+#2+. the \verb+_renew+ variant requires a preceding declaration
+%    \begin{macrocode}
+
+\cs_new:Nn \@@_pars:NN
+  {
+    \tl_gset:Nn #1 { #2 }
+  }
+
+\cs_generate_variant:Nn \@@_pars:NN { cc }
+
+\cs_new_protected:Nn \@@_generate_aux:NNnn
+  {
+    \object_if_exists:nF
       {
-        \@@_init_vars:Nn { ##1 } { ##2 }
-        \@@_erroring:VV \l_@@_cexp_str \l_@@_fexp_str
-        \exp_args:Nc #2 { \@@_cmd: }
+        \@@_cmd:n{ #3 }
+      }
+      {
+        \object_create:VnnNN \c_@@_cmdproxy_str
+          { stycmd }{ entity - #3 }
+          \c_object_global_str
+          \c_object_public_str
+      }
+      #2 { #3 }
+      \tl_if_empty:cT
+        {
+          \object_member_adr:nn
+            {
+              \@@_cmd:n{ #3 }
+            }
+            { default }
+        }
+        {
+           \@@_pars:cc
+             {
+               \object_address:nn
+                 {
+                   \@@_cmd:n{ #3 }
+                 }
+                 { default }
+             }
+             {
+               \object_address:nnn
+                 {
+                   \@@_cmd:n{ #3 }
+                 }
+                 {
+                   cmd - #4
+                 }
+                 { stycmd_void }
+             }
+        }
+      \exp_args:Nc #1
+        {
+          \object_address:nnn
+            {
+              \@@_cmd:n{ #3 }
+            }
+            {
+              cmd - #4
+            }
+            { stycmd_void }
+        }
+
+  }
+
+\cs_new_protected:Nn \@@_generate_renew_aux:Nnn
+  {
+      \exp_args:Nc #1
+        {
+          \object_address:nnn
+            {
+              \@@_cmd:n{ #2 }
+            }
+            {
+              cmd - #3
+            }
+            { stycmd_void }
+        }
+
+  }
+
+\cs_new_protected:Nn \stycmd_generate:NNN
+  {
+    \cs_new_protected:Npn #1 ##1 ##2
+      {
+        \@@_generate_aux:NNnn #2 #3 { ##1 }{ ##2 }
       }
   }
+\cs_new_protected:Nn \stycmd_generate:NN
+  {
+    \stycmd_generate:NNN #1 #2 \stycmd_xparsecmd:n
+  }
+\cs_new_protected:Nn \stycmd_generate_renew:NN
+  {
+    \cs_new_protected:Npn #1 ##1 ##2
+      {
+        \@@_generate_renew_aux:Nnn #2 { ##1 }{ ##2 }
+      }
+  }
+
 %    \end{macrocode}
 %\end{macro}
 %
