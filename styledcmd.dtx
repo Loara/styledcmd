@@ -155,6 +155,7 @@
 % \begin{function}{\stycmd_generate:NNN}
 %  \begin{syntax}
 %  \cs{stycmd_generate:NNN} \meta{generator name} \meta{ES commands generator} \meta{dispatch command generator}
+%  \cs{stycmd_generate:NN} \meta{generator name} \meta{ES commands generator}
 %  \end{syntax}
 %  Creates a generator of styled commands with name \meta{generator name}. Argument \meta{ES commands generator} is used to create ES commands and should accept a macro name as the first argument, but there aren't other restrictions on remaining arguments. Suitable ES commands generators are \tn{newcommand} and \tn{NewDocumentCommand}.
 % \end{function}
@@ -174,6 +175,8 @@
 % \end{syntax}
 % Creates the dispatch command with \tn{providecommand} with mandatory style name parameter (used in \tn{newstyledcmdExp}).
 %\end{function}
+%
+% If you don't specify the dispatch command generator (by using the |NN| variant) \cs{stycmd_xparsecmd:n} is used implicitly.
 %
 %\end{documentation}
 %
@@ -210,7 +213,7 @@
 
 \cs_new:Nn \@@_cmd_style:nn
   {
-    \object_member_adr:nnn{ \@@_cmd:n{ #1 } }{ cmd - #2 }
+    \object_member_adr:nnn{ \@@_cmd:n{ #1 } }{ style - #2 }
       { stycmd_void }
   }
 
@@ -249,7 +252,7 @@
                 \@@_cmd:n{ #2 }
               }
               {
-                cmd - ##1
+                style - ##1
               }
               { stycmd_void }
           }
@@ -290,7 +293,7 @@
                 \@@_cmd:n{ #2 }
               }
               {
-                cmd - ##1
+                style - ##1
               }
               { stycmd_void }
           }
@@ -320,21 +323,10 @@
   {
     \@@_pars:cc
       {
-        \object_member_adr:nn
-          {
-            \@@_cmd:n{ #1 }
-          }
-          { default }
+        \@@_cmd_default:n{ #1 }
       }
       {
-        \object_member_adr:nnn
-          {
-            \@@_cmd:n{ #1 }
-          }
-          {
-            cmd - #2
-          }
-          { stycmd_void }
+        \@@_cmd_style:nn{ #1 }{ #2 }
       }
   }
 \cs_generate_variant:Nn \@@_chdef_named:nn { fn }
@@ -371,35 +363,17 @@
 
         \@@_pars:cc
           {
-            \object_member_adr:nn
-              {
-                \@@_cmd:n{ #3 }
-              }
-              { default }
+            \@@_cmd_default:n{ #3 }
           }
           {
-            \object_member_adr:nnn
-              {
-                \@@_cmd:n{ #3 }
-              }
-              {
-                cmd - #4
-              }
-              { stycmd_void }
+            \@@_cmd_style:nn{ #3 }{ #4 }
           }
 
         #2 { #3 }
       }
       \exp_args:Nc #1
         {
-          \object_member_adr:nnn
-            {
-              \@@_cmd:n{ #3 }
-            }
-            {
-              cmd - #4
-            }
-            { stycmd_void }
+          \@@_cmd_style:nn{ #3 }{ #4 }
         }
 
   }
@@ -415,14 +389,7 @@
   {
       \exp_args:Nc #1
         {
-          \object_member_adr:nnn
-            {
-              \@@_cmd:n{ #2 }
-            }
-            {
-              cmd - #3
-            }
-            { stycmd_void }
+          \@@_cmd_style:nn{ #2 }{ #3 }
         }
 
   }
