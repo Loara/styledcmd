@@ -27,7 +27,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\RequirePackage{expl3}[2022-04-10]
 %<package>\ProvidesExplPackage{styledcmd}{2022/08/03}{1.2}{Command with different styles}
-%<package>\RequirePackage{lt3rawobjects}
+%<package>\RequirePackage{lt3rawobjects}[2022-11-26]
 %<package>\RequirePackage{xparse}
 %<*driver>
 \documentclass[full]{l3doc}
@@ -314,25 +314,35 @@
 %Change the default style for specified command
 %    \begin{macrocode}
 
-\NewDocumentCommand{\setGlobalStyle}{m m}
+\cs_new_protected:Nn \@@_setdef:nN
   {
-    \@@_chdef:Nn #1 { #2 }
-  }
 
-\cs_new_protected:Nn \@@_chdef_named:nn
-  {
-    \@@_pars:cc
+    \object_member_set:nnn
       {
-        \@@_cmd_default:n{ #1 }
+        \@@_cmd:n{ #1 }
       }
+      { default }
+      { #2 }
+  }
+\cs_generate_variant:Nn \@@_setdef:nN { nc }
+
+\cs_new_protected:Nn \@@_setdef_style:nn
+  {
+    \@@_setdef:nc{ #1 }
       {
         \@@_cmd_style:nn{ #1 }{ #2 }
       }
   }
-\cs_generate_variant:Nn \@@_chdef_named:nn { fn }
+
+\cs_generate_variant:Nn \@@_setdef_style:nn { fn }
 \cs_new_protected:Nn \@@_chdef:Nn
   {
-    \@@_chdef_named:fn{ \cs_to_str:N #1 }{ #2 }
+    \@@_setdef_style:fn{ \cs_to_str:N #1 }{ #2 }
+  }
+
+\NewDocumentCommand{\setGlobalStyle}{m m}
+  {
+    \@@_chdef:Nn #1 { #2 }
   }
 
 %    \end{macrocode}
@@ -341,11 +351,6 @@
 %\begin{macro}{\stycmd_generate:NNN, \stycmd_generate:NN,  \stycmd_generate_renew:NN}
 %Declare the styled version \verb+#1+ of the macro generator command \verb+#2+. the \verb+_renew+ variant requires a preceding declaration
 %    \begin{macrocode}
-
-\cs_new:Nn \@@_pars:NN
-  {
-    \tl_gset:Nn #1 { #2 }
-  }
 
 \cs_generate_variant:Nn \@@_pars:NN { cc }
 
@@ -361,13 +366,7 @@
           \c_object_global_str
           \c_object_public_str
 
-        \@@_pars:cc
-          {
-            \@@_cmd_default:n{ #3 }
-          }
-          {
-            \@@_cmd_style:nn{ #3 }{ #4 }
-          }
+        \@@_setdef_style:nn{ #3 }{ #4 }
 
         #2 { #3 }
       }
