@@ -143,8 +143,48 @@
 %\end{verbatim}
 %expand as \newstyledcmdExp{\expCMD}{sty1}{Style 1}\newstyledcmdExp{\expCMD}{sty2}{Style 2} \expCMD{} \expCMD{sty1} \expCMD{sty2}
 %
+%\section{Groups}
+%The group mechanism is very different from \thpkg\ |1.2| and preceding versions. From |2.0| styled commands can be added to a group in order to change toghether their style. Groups are created with the following command
+%\begin{function}{\NewStyledGroup}
+%\begin{syntax}
+% \tn{NewStyledGroup} \Arg{group name} \Arg{comma list of commands}
+%\end{syntax}
+%\end{function}
+%and you can change the default style for each member of a group with
+%\begin{function}{\SetGroupStyle} 
+%\begin{syntax}
+% \tn{SetGroupStyle} \Arg{group name} \Arg{style name}
+%\end{syntax}
+%\end{function}
+%
+%Suppose you've created the following styled commands:
+%
+% \begin{verbatim}
+%  \newstyledcmd{\LenUnit}{SI}{metre}
+%  \newstyledcmd{\MasUnit}{SI}{kilo}
+%
+%  \newstyledcmd{\LenUnit}{old}{yard}
+%  \newstyledcmd{\MasUnit}{old}{pound}
+% \end{verbatim}
+%
+%  \newstyledcmd{\LenUnit}{SI}{metre}
+%  \newstyledcmd{\MasUnit}{SI}{kilo}
+%
+%  \newstyledcmd{\LenUnit}{old}{yard}
+%  \newstyledcmd{\MasUnit}{old}{pound}
+%
+% Commands \tn{LenUnit}, \tn{MasUnit} will expand as \LenUnit, \MasUnit\ respectively since |SI| is the default style. We've used \tn{newstyledcmd} but you could use also \tn{NewDocStyledCMD}, \tn{newstyledcmdExp} or any other command generated as in section \ref{advanced}. To add these two commands to group |Units| run
+% \begin{verbatim}
+%  \NewStyledGroup{Units}{\LenUnit, \MasUnit}
+% \end{verbatim}
+%  \NewStyledGroup{Units}{\LenUnit, \MasUnit}\SetGroupStyle{Units}{old}If you want to set |old| as the default style for these commands just run
+% \begin{verbatim}
+%  \SetGroupStyle{Units}{old}
+% \end{verbatim}
+% now \tn{LenUnit}, \tn{MasUnit} will expand as \LenUnit, \MasUnit\ respectively.
+%
 %\section{Advanced usage}
-%If \tn{newstyledcmd}, \tn{NewDocStyledCMD} and \tn{newstyledcmdExp} aren't suitable for you it's possible to create a custom styled command generator, but we first need to know a bit of the internal structure of \thpkg.
+%\label{advanced}If \tn{newstyledcmd}, \tn{NewDocStyledCMD} and \tn{newstyledcmdExp} aren't suitable for you it's possible to create a custom styled command generator, but we first need to know a bit of the internal structure of \thpkg.
 %
 % What you see as a styled command it's instead a collection of different macros:
 % \begin{itemize}
@@ -441,6 +481,71 @@
 \stycmd_generate:NNN \newstyledcmdExp \newcommand \stycmd_expcmd:n
 \stycmd_generate_renew:NN \renewstyledcmdExp \renewcommand
 \stycmd_generate:NNN \providestyledcmdExp \providecommand \stycmd_expcmd:n
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\NewStyledGroup}
+%Creates a group of commands
+%    \begin{macrocode}
+
+\str_new:N \g_@@_grproxy_str
+\seq_new:N \g_@@_tmp_seq
+\seq_new:N \g_@@_tmpb_seq
+
+\proxy_create_gset:NnnN \g_@@_grproxy_str { stycmd }{ groups }
+  \c_object_public_str
+  
+\proxy_push_member:Vnn \g_@@_grproxy_str { commands }{ seq }
+  
+\cs_new_protected:Nn \@@_newgroup:nn
+  {
+    \object_create:VnnNN \g_@@_grproxy_str
+      { stycmd }
+      { group - #1 }
+      \c_object_global_str
+      \c_object_public_str
+      
+    \seq_gset_from_clist:Nn \g_@@_tmp_seq { #2 }
+    \seq_gset_map_x:NNn \g_@@_tmpb_seq \g_@@_tmp_seq 
+      {
+        \cs_to_str:N ##1 
+      }
+    
+    \object_member_set_eq:nnnN
+      {
+        \object_address:nn
+          { stycmd }
+          { group - #1 }
+      }
+      { commands }
+      { seq }
+      \g_@@_tmpb_seq
+  }
+  
+\NewDocumentCommand{\NewStyledGroup}{m m}
+  {
+    \@@_newgroup:nn { #1 } { #2 }
+  }
+
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\SetGroupStyle}
+%Change the default style for each command in the group.
+%    \begin{macrocode}
+\NewDocumentCommand{\SetGroupStyle}{m m}
+  {
+    \seq_map_inline:cn
+      {
+        \object_member_adr:nnn
+          { stycmd }
+          { group - #1 }
+          { seq }
+      }
+      {
+        \@@_setdef_style:nn{ ##1 }{ #2 }
+      }
+  }
 %    \end{macrocode}
 %\end{macro}
 %
