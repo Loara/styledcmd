@@ -144,13 +144,13 @@
 %expand as \newstyledcmdExp{\expCMD}{sty1}{Style 1}\newstyledcmdExp{\expCMD}{sty2}{Style 2} \expCMD{} \expCMD{sty1} \expCMD{sty2}
 %
 %\section{Groups}
-%The group mechanism is very different from \thpkg\ |1.2| and preceding versions. From |2.0| styled commands can be added to a group in order to change toghether their style. Groups are created with the following command
-%\begin{function}{\NewStyledGroup}
+%The group mechanism is very different from \thpkg\ |1.2| and preceding versions. From |2.0| styled commands can be added to a group in order to change toghether their style. Groups are automatically created when you're tying to add commands to it:
+%\begin{function}{\AddCMDToGroup}
 %\begin{syntax}
-% \tn{NewStyledGroup} \Arg{group name} \Arg{comma list of commands}
+% \tn{AddCMDToGroup} \Arg{group name} \Arg{comma list of commands}
 %\end{syntax}
 %\end{function}
-%and you can change the default style for each member of a group with
+% You can change the default style for each member of a group with
 %\begin{function}{\SetGroupStyle} 
 %\begin{syntax}
 % \tn{SetGroupStyle} \Arg{group name} \Arg{style name}
@@ -175,13 +175,23 @@
 %
 % Commands \tn{LenUnit}, \tn{MasUnit} will expand as \LenUnit, \MasUnit\ respectively since |SI| is the default style. We've used \tn{newstyledcmd} but you could use also \tn{NewDocStyledCMD}, \tn{newstyledcmdExp} or any other command generated as in section \ref{advanced}. To add these two commands to group |Units| run
 % \begin{verbatim}
-%  \NewStyledGroup{Units}{\LenUnit, \MasUnit}
+%  \AddCMDToGroup{Units}{\LenUnit, \MasUnit}
 % \end{verbatim}
-%  \NewStyledGroup{Units}{\LenUnit, \MasUnit}\SetGroupStyle{Units}{old}If you want to set |old| as the default style for these commands just run
+%  \AddCMDToGroup{Units}{\LenUnit}\AddCMDToGroup{Units}{\MasUnit}\SetGroupStyle{Units}{old}If you want to set |old| as the default style for these commands just run
 % \begin{verbatim}
 %  \SetGroupStyle{Units}{old}
 % \end{verbatim}
 % now \tn{LenUnit}, \tn{MasUnit} will expand as \LenUnit, \MasUnit\ respectively.
+%
+% Notice that if the specified group already exists then \tn{AddCMDToGroup} just appends the speficied commands to it. In particular this
+% \begin{verbatim}
+%  \AddCMDToGroup{Units}{\LenUnit}
+%  \AddCMDToGroup{Units}{\MasUnit}
+% \end{verbatim}
+% is equivalent to write
+% \begin{verbatim}
+%  \AddCMDToGroup{Units}{\LenUnit, \MasUnit}
+% \end{verbatim}
 %
 %\section{Advanced usage}
 %\label{advanced}This section is for advanced users and package mantainers that knows \LaTeX3, It's not needed to use \thpkg\ daily or creating documents. If \tn{newstyledcmd}, \tn{NewDocStyledCMD} and \tn{newstyledcmdExp} aren't suitable for you it's possible to create a custom styled command generator, but we first need to know a bit of the internal structure of \thpkg.
@@ -202,21 +212,21 @@
 %
 % Argument \meta{dispatch command generator} should generate the dispatch command. Despite \meta{ES commands generator} this command must have only one parameter, a string representing the command to be created. Suitable values for this parameter are:
 %
-% \begin{function}{\stycmd_xparsecmd:n}
+% \begin{function}{\stycmd_xparsecmd:N}
 %  \begin{syntax}
-%   \cs{stycmd_xparsecmd:n} \marg{command name string}
+%   \cs{stycmd_xparsecmd:N} \meta{command}
 %  \end{syntax}
 %  Creates the dispatch command with \tn{ProvideDocumentCommand} with optional style name parameter (used in \tn{newstyledcmd} and \tn{NewDocStyledCMD}).
 %\end{function}
 %
-%\begin{function}{\stycmd_expcmd:n}
+%\begin{function}{\stycmd_expcmd:N}
 % \begin{syntax}
-%   \cs{stycmd_expcmd:n} \marg{command name string}
+%   \cs{stycmd_expcmd:N} \meta{command}
 % \end{syntax}
 % Creates the dispatch command with \tn{providecommand} with mandatory style name parameter (used in \tn{newstyledcmdExp}).
 %\end{function}
 %
-% If you don't specify the dispatch command generator (by using the |NN| variant) \cs{stycmd_xparsecmd:n} is used implicitly.
+% If you don't specify the dispatch command generator (by using the |NN| variant) \cs{stycmd_xparsecmd:N} is used implicitly.
 %
 % \begin{function}{\stycmd_generate_renew:NN}
 %  \begin{syntax}
@@ -251,6 +261,7 @@
 %\begin{variable}{\c_@@_cmdproxy_str}
 %Proxy used to generate styled commands
 %    \begin{macrocode}
+
 \str_const:Nx \c_@@_cmdproxy_str { \object_address:nn
     { stycmd }{ proxy } }
 
@@ -260,108 +271,224 @@
 %    \end{macrocode}
 %\end{variable}
 %
-%\begin{macro}{\@@_cmd:n, \@@_cmd_style:nn, \@@_cmd_default:n}
-%Name of a command bounded to some style.
+% Dummy member type
 %    \begin{macrocode}
+
+\cs_gset_eq:NN \stycmd_void_use:c \use:c
+
+%    \end{macrocode}
+%
+%\begin{macro}{\@@_cmd:n}
+% Entity name
+%    \begin{macrocode}
+
 \cs_new:Nn \@@_cmd:n
   {
     \object_address:nn{ stycmd }{ entity - #1 }
   }
 
-\cs_new:Nn \@@_cmd_style:nn
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\@@_setdef_strip:Nn}
+%Changes the default style
+%    \begin{macrocode}
+
+\cs_new_protected:Nn \@@_setdef_aux:nN
   {
-    \object_member_adr:nnn{ \@@_cmd:n{ #1 } }{ style - #2 }
-      { stycmd_void }
+    \object_member_set:nnn
+      {
+        \@@_cmd:n{ #1 }
+      }
+      { default }
+      { #2 }
+  }
+\cs_generate_variant:Nn \@@_setdef_aux:nN { nc }
+
+\cs_new_protected:Nn \@@_setdef_style:nn
+  {
+    \@@_setdef_aux:nc{ #1 }
+      {
+        \object_member_adr:nnn
+          {
+            \@@_cmd:n{ #1 }
+          }
+          {
+            style - #2
+          }
+          {
+            stycmd_void
+          }
+      }
   }
 
-\cs_new:Nn \stycmd_void_use:N { #1 }
-\cs_new_eq:NN \stycmd_void_use:c \use:c
+\cs_generate_variant:Nn \@@_setdef_style:nn { ff }
 
-\cs_new:Nn \@@_cmd_default:n
+\cs_new_protected:Nn \@@_setdef_strip:Nn
   {
-    \object_member_adr:nn{ \@@_cmd:n{ #1 } } { default }
+    \@@_setdef_style:ff{ \cs_to_str:N #1 }
+      { \tl_trim_spaces:n{ #2 } }
   }
 
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\stycmd_xparsecmd:n}
+%\begin{macro}{\@@_cmd_define_strip:NNn}
+% Define a macro with the specified command
+%    \begin{macrocode}
+
+\cs_new_protected:Nn \@@_cmd_define_aux_aux:NN
+  {
+    #1 { #2 }
+  }
+\cs_generate_variant:Nn \@@_cmd_define_aux_aux:NN { Nc }
+
+\cs_new_protected:Nn \@@_cmd_define_aux:Nnn
+  {
+    \@@_cmd_define_aux_aux:Nc #1
+      {
+        \object_member_adr:nnn
+          {
+            \@@_cmd:n{ #2 }
+          }
+          {
+            style - #3
+          }
+          {
+            stycmd_void
+          }
+      }
+  }
+
+\cs_generate_variant:Nn \@@_cmd_define_aux:Nnn { Nff }
+
+\cs_new_protected:Nn \@@_cmd_define_strip:NNn
+  {
+    \@@_cmd_define_aux:Nff #1
+      { \cs_to_str:N #2 }{ \tl_trim_spaces:n { #3 } }
+  }
+
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\@@_cmd_usedef:N, \@@_cmd_usesty_strip:Nn}
+%Uses the styled command
+%    \begin{macrocode}
+
+\cs_new:Nn \@@_cmd_usedef_aux:n
+  {
+    \object_member_use:nn
+      {
+        \@@_cmd:n{ #1 }
+      }
+      {
+        default
+      }
+  }
+
+\cs_generate_variant:Nn \@@_cmd_usedef_aux:n { f }
+
+\cs_new:Nn \@@_cmd_usedef:N
+  {
+    \@@_cmd_usedef_aux:f{ \cs_to_str:N #1 }
+  }
+
+
+\cs_new:Nn \@@_cmd_usesty_aux:nn
+  {
+    \object_member_use:nnn
+      {
+        \@@_cmd:n{ #1 }
+      }
+      {
+        style - #2
+      }
+      { stycmd_void }
+  }
+
+\cs_generate_variant:Nn \@@_cmd_usesty_aux:nn { ff }
+
+\cs_new:Nn \@@_cmd_usesty_strip:Nn
+  {
+    \@@_cmd_usesty_aux:ff{ \cs_to_str:N #1 }
+      { \tl_trim_spaces:n{ #2 } }
+  }
+
+%    \end{macrocode}
+%\end{macro}
+%
+% \begin{macro}{\@@_entity_create_strip:Nnn}
+% Creates a new entity if it doesn't exists and execute following code
+%    \begin{macrocode}
+
+\cs_new_protected:Nn \@@_entity_create_aux:nnn
+  {
+    \object_if_exist:nF
+      {
+        \@@_cmd:n{ #1 }
+      }
+      {
+        \object_create:VnnNN \c_@@_cmdproxy_str
+          { stycmd }{ entity - #1 }
+          \c_object_global_str
+          \c_object_public_str
+
+        \@@_setdef_style:nn{ #1 }{ #2 }
+
+        #3
+      }
+  }
+
+\cs_generate_variant:Nn \@@_entity_create_aux:nnn { ffn }
+
+\cs_new_protected:Nn \@@_entity_create_strip:Nnn
+  {
+    \@@_entity_create_aux:ffn
+      { \cs_to_str:N #1 }
+      { \tl_trim_spaces:n{ #2 } }
+      { #3 }
+  }
+
+%    \end{macrocode}
+% \end{macro}
+%
+%\begin{macro}{\stycmd_xparsecmd:N}
 % Defines the main macro with \cs{ProvideDocumentCommand}.
 %    \begin{macrocode}
 
-\cs_new_protected:Nn \@@_xparsecmd_aux:Nn
+\cs_new_protected:Nn \stycmd_xparsecmd:N
   {
     \ProvideDocumentCommand { #1 } { o }
       {
         \IfNoValueTF {##1}
           {
-            \object_member_use:nn
-              {
-                \@@_cmd:n{ #2 }
-              }
-              {
-                default
-              }
+            \@@_cmd_usedef:N #1
           }
           {
-            \object_member_use:nnn
-              {
-                \@@_cmd:n{ #2 }
-              }
-              {
-                style - ##1
-              }
-              { stycmd_void }
+            \@@_cmd_usesty_strip:Nn #1 { ##1 }
           }
       }
-  }
-
-\cs_generate_variant:Nn \@@_xparsecmd_aux:Nn { cn }
-
-\cs_new_protected:Nn \stycmd_xparsecmd:n
-  {
-    \@@_xparsecmd_aux:cn { #1 }{ #1 }
   }
 
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\stycmd_expcmd:n}
+%\begin{macro}{\stycmd_expcmd:N}
 % Defines the main macro with \tn{providecommand} but the style argument is mandatory in order to make the command expandable. To use default style pass an empty argument as style.
 %    \begin{macrocode}
 
-\cs_new_protected:Nn \@@_expcmd_aux:Nn
+\cs_new_protected:Nn \stycmd_expcmd:N
   {
     \providecommand { #1 } [1]
       {
         \tl_if_empty:nTF {##1}
           {
-            \object_member_use:nn
-              {
-                \@@_cmd:n{ #2 }
-              }
-              {
-                default
-              }
+            \@@_cmd_usedef:N #1
           }
           {
-            \object_member_use:nnn
-              {
-                \@@_cmd:n{ #2 }
-              }
-              {
-                style - ##1
-              }
-              { stycmd_void }
+            \@@_cmd_usesty_strip:Nn #1 { ##1 }
           }
       }
-  }
-
-\cs_generate_variant:Nn \@@_expcmd_aux:Nn { cn }
-
-\cs_new_protected:Nn \stycmd_expcmd:n
-  {
-    \@@_expcmd_aux:cn { #1 }{ #1 }
   }
 
 %    \end{macrocode}
@@ -371,35 +498,9 @@
 %Change the default style for specified command
 %    \begin{macrocode}
 
-\cs_new_protected:Nn \@@_setdef:nN
-  {
-
-    \object_member_set:nnn
-      {
-        \@@_cmd:n{ #1 }
-      }
-      { default }
-      { #2 }
-  }
-\cs_generate_variant:Nn \@@_setdef:nN { nc }
-
-\cs_new_protected:Nn \@@_setdef_style:nn
-  {
-    \@@_setdef:nc{ #1 }
-      {
-        \@@_cmd_style:nn{ #1 }{ #2 }
-      }
-  }
-
-\cs_generate_variant:Nn \@@_setdef_style:nn { fn }
-\cs_new_protected:Nn \@@_chdef:Nn
-  {
-    \@@_setdef_style:fn{ \cs_to_str:N #1 }{ #2 }
-  }
-
 \NewDocumentCommand{\setGlobalStyle}{m m}
   {
-    \@@_chdef:Nn #1 { #2 }
+    \@@_setdef_strip:Nn #1 { #2 }
   }
 
 %    \end{macrocode}
@@ -409,57 +510,21 @@
 %Declare the styled version \verb+#1+ of the macro generator command \verb+#2+. the \verb+_renew+ variant requires a preceding declaration
 %    \begin{macrocode}
 
-\cs_generate_variant:Nn \@@_pars:NN { cc }
-
-\cs_new_protected:Nn \@@_generate_aux:NNnn
-  {
-    \object_if_exist:nF
-      {
-        \@@_cmd:n{ #3 }
-      }
-      {
-        \object_create:VnnNN \c_@@_cmdproxy_str
-          { stycmd }{ entity - #3 }
-          \c_object_global_str
-          \c_object_public_str
-
-        \@@_setdef_style:nn{ #3 }{ #4 }
-
-        #2 { #3 }
-      }
-      \exp_args:Nc #1
-        {
-          \@@_cmd_style:nn{ #3 }{ #4 }
-        }
-
-  }
-
-\cs_generate_variant:Nn \@@_generate_aux:NNnn { NNfn }
-
-\cs_new_protected:Nn \@@_generate_aux_cmd:NNNn
-  {
-    \@@_generate_aux:NNfn #1 #2 { \cs_to_str:N #3 }{ #4 }
-  }
-
-\cs_new_protected:Nn \@@_generate_renew_aux:Nnn
-  {
-      \exp_args:Nc #1
-        {
-          \@@_cmd_style:nn{ #2 }{ #3 }
-        }
-
-  }
-
 \cs_new_protected:Nn \stycmd_generate:NNN
   {
     \cs_new_protected:Npn #1 ##1 ##2
       {
-        \@@_generate_aux_cmd:NNNn #2 #3 ##1 { ##2 }
+        \@@_entity_create_strip:Nnn ##1 { ##2 }
+          {
+            #3 ##1
+          }
+        \@@_cmd_define_strip:NNn #2 ##1 { ##2 }
       }
   }
+
 \cs_new_protected:Nn \stycmd_generate:NN
   {
-    \stycmd_generate:NNN #1 #2 \stycmd_xparsecmd:n
+    \stycmd_generate:NNN #1 #2 \stycmd_xparsecmd:N
   }
 
 
@@ -467,7 +532,7 @@
   {
     \cs_new_protected:Npn #1 ##1 ##2
       {
-        \@@_generate_renew_aux:Nnn #2 { ##1 }{ ##2 }
+        \@@_cmd_define_strip:NNn #2 ##1 { ##2 }
       }
   }
 
@@ -495,13 +560,13 @@
 %\begin{macro}{\newstyledcmdExp, \renewstyledcmdExp, \providestyledcmdExp}
 %Declare a new macro with the specified style name.
 %    \begin{macrocode}
-\stycmd_generate:NNN \newstyledcmdExp \newcommand \stycmd_expcmd:n
+\stycmd_generate:NNN \newstyledcmdExp \newcommand \stycmd_expcmd:N
 \stycmd_generate_renew:NN \renewstyledcmdExp \renewcommand
-\stycmd_generate:NNN \providestyledcmdExp \providecommand \stycmd_expcmd:n
+\stycmd_generate:NNN \providestyledcmdExp \providecommand \stycmd_expcmd:N
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\NewStyledGroup}
+%\begin{macro}{\AddCMDToGroup}
 %Creates a group of commands
 %    \begin{macrocode}
 
@@ -513,14 +578,27 @@
   \c_object_public_str
   
 \proxy_push_member:Vnn \g_@@_grproxy_str { commands }{ seq }
-  
-\cs_new_protected:Nn \@@_newgroup:nn
+
+\cs_generate_variant:Nn \seq_gconcat:NNN { ccN }
+
+\cs_new_protected:Nn \@@_gconcat:nN
   {
-    \object_create:VnnNN \g_@@_grproxy_str
-      { stycmd }
-      { group - #1 }
-      \c_object_global_str
-      \c_object_public_str
+    \seq_gconcat:ccN { #1 }{ #1 } #2
+  }
+  
+\cs_new_protected:Nn \@@_addgroup:nn
+  {
+    \object_if_exist:nF
+      {
+        \object_address:nn{ stycmd }{ group - #1 }
+      }
+      {
+        \object_create:VnnNN \g_@@_grproxy_str
+          { stycmd }
+          { group - #1 }
+          \c_object_global_str
+          \c_object_public_str
+      }
       
     \seq_gset_from_clist:Nn \g_@@_tmp_seq { #2 }
     \seq_gset_map_x:NNn \g_@@_tmpb_seq \g_@@_tmp_seq 
@@ -528,20 +606,24 @@
         \cs_to_str:N ##1 
       }
     
-    \object_member_set_eq:nnnN
+    \@@_gconcat:nN
       {
-        \object_address:nn
-          { stycmd }
-          { group - #1 }
-      }
-      { commands }
-      { seq }
-      \g_@@_tmpb_seq
+      \object_member_adr:nnn
+        {
+          \object_address:nn
+            { stycmd }
+            { group - #1 }
+        }
+        { commands }
+        { seq }
+      } \g_@@_tmpb_seq
   }
+
+\cs_generate_variant:Nn \@@_addgroup:nn { fn }
   
-\NewDocumentCommand{\NewStyledGroup}{m m}
+\NewDocumentCommand{\AddCMDToGroup}{m m}
   {
-    \@@_newgroup:nn { #1 } { #2 }
+    \@@_addgroup:fn { \tl_trim_spaces:n{ #1 } } { #2 }
   }
 
 %    \end{macrocode}
@@ -569,6 +651,53 @@
   }
 %    \end{macrocode}
 %\end{macro}
+%
+%Legacy commands
+%    \begin{macrocode}
+
+\str_new:N \g_@@_act_group_str
+\str_new:N \g_@@_act_style_str
+
+\NewDocumentCommand{\styBeginGroup}{ m }
+  {
+    \str_gset:Nn \g_@@_act_group_str{ #1 }
+  }
+
+\NewDocumentCommand{\styEndGroup}{}
+  {
+    \str_gset:Nn \g_@@_act_group_str{}
+  }
+
+\NewDocumentCommand{\styBeginStyle}{ m }
+  {
+    \str_gset:Nn \g_@@_act_style_str{ #1 }
+  }
+
+\NewDocumentCommand{\styEndStyle}{}
+  {
+    \str_gset:Nn \g_@@_act_style_str{}
+  }
+
+\cs_generate_variant:Nn \@@_addgroup:nn { Vn }
+
+\NewDocumentCommand{\newGStyledCMD}{m o m}
+  {
+    \@@_addgroup:Vn \g_@@_act_group_str { #1 }
+    \IfNoValueTF{ #2 }
+      {
+        \exp_args:NNV \newstyledcmd #1 \g_@@_act_style_str { #3 }
+      }
+      {
+        \exp_args:NNV \newstyledcmd #1 \g_@@_act_style_str [ #2 ] { #3 }
+      }
+  }
+
+\NewDocumentCommand{\NewGDocStyledCMD}{m m m}
+  {
+    \@@_addgroup:Vn \g_@@_act_group_str { #1 }
+    \exp_args:NNV \NewDocStyledCMD #1 \g_@@_act_style_str { #2 } { #3 }
+  }
+%    \end{macrocode}
 %
 %    \begin{macrocode}
 %</package>
