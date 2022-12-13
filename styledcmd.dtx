@@ -22,12 +22,12 @@
 %
 % \iffalse
 %<*driver>
-\ProvidesFile{styledcmd.dtx}[2022/08/03 2.0 Command with different styles]
+\ProvidesFile{styledcmd.dtx}[2022/12/13 2.0 Command with different styles]
 %</driver>
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\RequirePackage{expl3}[2022-04-10]
-%<package>\ProvidesExplPackage{styledcmd}{2022/08/03}{2.0}{Command with different styles}
-%<package>\RequirePackage{lt3rawobjects}[2022-11-26]
+%<package>\ProvidesExplPackage{styledcmd}{2022/12/13}{2.0}{Command with different styles}
+%<package>\RequirePackage{lt3rawobjects}[2022-12-12]
 %<package>\RequirePackage{xparse}
 %<*driver>
 \documentclass[full]{l3doc}
@@ -45,7 +45,7 @@
 %
 %\title{styledcmd}
 %\author{Paolo De Donato}
-%\date{03 August 2022}
+%\date{13 December 2022}
 %
 %\maketitle
 %
@@ -87,21 +87,21 @@
 %
 %\section{How do you change the default style?}
 %In order to change the default style (the one used when you don't choose explicitily a style) you need to execute the following command
-%\begin{function}{\setGlobalStyle}
+%\begin{function}{\SetGlobalStyle}
 %\begin{syntax}
-%\tn{setGlobalStyle} \{\cs{\meta{command name}}\} \marg{new default style name}
+%\tn{SetGlobalStyle} \{\cs{\meta{command name}}\} \marg{new default style name}
 %\end{syntax}
 %\end{function}
-%\setGlobalStyle{\saluto}{formal}
+%\SetGlobalStyle{\saluto}{formal}
 %
-%For example in order to change the default style of command \tn{saluto} from \verb+informal+ to \verb+formal+ you need to execute command \tn{setGlobalStyle}\{\cs{saluto}\}\{\verb+formal+\}. With this command the output of preceding commands will instead be \saluto{uncle}, \saluto[informal]{uncle}, \saluto[formal]{uncle}.
+%For example in order to change the default style of command \tn{saluto} from \verb+informal+ to \verb+formal+ you need to execute command \tn{SetGlobalStyle}\{\cs{saluto}\}\{\verb+formal+\}. With this command the output of preceding commands will instead be \saluto{uncle}, \saluto[informal]{uncle}, \saluto[formal]{uncle}.
 %
 %\section{Customize parameters with \pkg{xparse}}
 %\thpkg{} loads automatically the \pkg{xparse} package for internal reasons. You can also define new styled commands with the same syntax used by  \tn{NewDocumentCommand} with the following command
 %
 %\begin{function}{\NewDocStyledCMD, \RenewDocStyledCMD, \ProvideDocStyledCMD}
 %\begin{syntax}
-%\tn{NewDocStyledCMD} \marg{command name} \marg{format name} \marg{arguments format} \marg{code}
+%\tn{NewDocStyledCMD} \Arg{\cs{\meta{command name}}} \Arg{format name} \Arg{arguments format} \Arg{code}
 %\end{syntax}
 %\end{function}
 %
@@ -480,11 +480,11 @@
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\setGlobalStyle}
+%\begin{macro}{\SetGlobalStyle}
 %Change the default style for specified command
 %    \begin{macrocode}
 
-\NewDocumentCommand{\setGlobalStyle}{m m}
+\NewDocumentCommand{\SetGlobalStyle}{m m}
   {
     \@@_setdef_strip:Nn #1 { #2 }
   }
