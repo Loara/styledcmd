@@ -22,11 +22,11 @@
 %
 % \iffalse
 %<*driver>
-\ProvidesFile{styledcmd.dtx}[2022/08/03 1.2 Command with different styles]
+\ProvidesFile{styledcmd.dtx}[2022/08/03 2.0 Command with different styles]
 %</driver>
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\RequirePackage{expl3}[2022-04-10]
-%<package>\ProvidesExplPackage{styledcmd}{2022/08/03}{1.2}{Command with different styles}
+%<package>\ProvidesExplPackage{styledcmd}{2022/08/03}{2.0}{Command with different styles}
 %<package>\RequirePackage{lt3rawobjects}[2022-11-26]
 %<package>\RequirePackage{xparse}
 %<*driver>
@@ -641,33 +641,43 @@
 %Legacy commands
 %    \begin{macrocode}
 
+\msg_new:nnnn{ styledcmd }{ stydep }{ Old-fashioned~groups~for~styled~commands~are~deprecated }
+  {
+    From~version~2.0~of~styledcmd~you~should~use~new~group~commands~instea~of~old~ones,~see~official~documentation~on~CTAN.
+  }
+
 \str_new:N \g_@@_act_group_str
 \str_new:N \g_@@_act_style_str
 
 \NewDocumentCommand{\styBeginGroup}{ m }
   {
+    \msg_warning:nn{ styledcmd }{ stydep }
     \str_gset:Nn \g_@@_act_group_str{ #1 }
   }
 
 \NewDocumentCommand{\styEndGroup}{}
   {
+    \msg_warning:nn{ styledcmd }{ stydep }
     \str_gset:Nn \g_@@_act_group_str{}
   }
 
 \NewDocumentCommand{\styBeginStyle}{ m }
   {
+    \msg_warning:nn{ styledcmd }{ stydep }
     \str_gset:Nn \g_@@_act_style_str{ #1 }
   }
 
 \NewDocumentCommand{\styEndStyle}{}
   {
+    \msg_warning:nn{ styledcmd }{ stydep }
     \str_gset:Nn \g_@@_act_style_str{}
   }
 
 \cs_generate_variant:Nn \@@_addgroup:nn { Vn }
 
-\NewDocumentCommand{\newGStyledCMD}{m o m}
+\NewDocumentCommand{\newGstyledcmd}{m o m}
   {
+    \msg_warning:nn{ styledcmd }{ stydep }
     \@@_addgroup:Vn \g_@@_act_group_str { #1 }
     \IfNoValueTF{ #2 }
       {
@@ -680,9 +690,16 @@
 
 \NewDocumentCommand{\NewGDocStyledCMD}{m m m}
   {
+    \msg_warning:nn{ styledcmd }{ stydep }
     \@@_addgroup:Vn \g_@@_act_group_str { #1 }
     \exp_args:NNV \NewDocStyledCMD #1 \g_@@_act_style_str { #2 } { #3 }
   }
+  
+ \NewDocumentCommand{\setGroupStyle}{m m}
+   {
+     \msg_warning:nn{ styledcmd }{ stydep }
+     \SetGroupStyle{ #1 }{ #2 }
+   }
 %    \end{macrocode}
 %
 %    \begin{macrocode}
