@@ -1,4 +1,4 @@
-% \iffalse meta-comment
+	% \iffalse meta-comment
 %
 %  styledcmd Handle multiple versions for user-defined macros in LaTeX
 %  Copyright (C) 2021  Paolo De Donato <dedonato95@hotmail.it>
@@ -271,13 +271,6 @@
 %    \end{macrocode}
 %\end{variable}
 %
-% Dummy member type
-%    \begin{macrocode}
-
-\cs_gset_eq:NN \stycmd_void_use:c \use:c
-
-%    \end{macrocode}
-%
 %\begin{macro}{\@@_cmd:n}
 % Entity name
 %    \begin{macrocode}
@@ -309,15 +302,12 @@
   {
     \@@_setdef_aux:nc{ #1 }
       {
-        \object_member_adr:nnn
+        \object_macro_adr:nn
           {
             \@@_cmd:n{ #1 }
           }
           {
             style - #2
-          }
-          {
-            stycmd_void
           }
       }
   }
@@ -347,15 +337,12 @@
   {
     \@@_cmd_define_aux_aux:Nc #1
       {
-        \object_member_adr:nnn
+        \object_macro_adr:nn
           {
             \@@_cmd:n{ #2 }
           }
           {
             style - #3
-          }
-          {
-            stycmd_void
           }
       }
   }
@@ -396,14 +383,13 @@
 
 \cs_new:Nn \@@_cmd_usesty_aux:nn
   {
-    \object_member_use:nnn
+    \object_macro_use:nn
       {
         \@@_cmd:n{ #1 }
       }
       {
         style - #2
       }
-      { stycmd_void }
   }
 
 \cs_generate_variant:Nn \@@_cmd_usesty_aux:nn { ff }
