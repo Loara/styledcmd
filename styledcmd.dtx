@@ -1,7 +1,7 @@
-	% \iffalse meta-comment
+% \iffalse meta-comment
 %
 %  styledcmd Handle multiple versions for user-defined macros in LaTeX
-%  Copyright (C) 2021-2023 Paolo De Donato <dedonato95@hotmail.it>
+%  Copyright (C) 2021-2024 Paolo De Donato <dedonato95@hotmail.it>
 %
 %  This file is part of Styledcmd.
 %
@@ -22,12 +22,12 @@
 %
 % \iffalse
 %<*driver>
-\ProvidesFile{styledcmd.dtx}[2022/12/13 2.0 Command with different styles]
+\ProvidesFile{styledcmd.dtx}[2024/03/07 2.0.1 Command with different styles]
 %</driver>
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\RequirePackage{expl3}[2022-04-10]
-%<package>\ProvidesExplPackage{styledcmd}{2022/12/13}{2.0}{Command with different styles}
-%<package>\RequirePackage{lt3rawobjects}[2022-12-12]
+%<package>\ProvidesExplPackage{styledcmd}{2024/03/07}{2.0.1}{Command with different styles}
+%<package>\RequirePackage{lt3rawobjects}[2023-03-17]
 %<package>\RequirePackage{xparse}
 %<*driver>
 \documentclass[full]{l3doc}
@@ -45,7 +45,7 @@
 %
 %\title{styledcmd}
 %\author{Paolo De Donato}
-%\date{13 December 2022}
+%\date{2.0.1 2024/03/06}
 %
 %\maketitle
 %
@@ -265,7 +265,7 @@
 \str_const:Nx \c_@@_cmdproxy_str { \object_address:nn
     { stycmd }{ proxy } }
 
-\proxy_create:nnN { stycmd }{ proxy } \c_object_public_str
+\proxy_create:nn { stycmd }{ proxy } 
 \proxy_push_member:Vnn \c_@@_cmdproxy_str { default }{ tl }
 
 %    \end{macrocode}
@@ -414,10 +414,8 @@
         \@@_cmd:n{ #1 }
       }
       {
-        \object_create:VnnNN \c_@@_cmdproxy_str
+        \object_create:Vnn \c_@@_cmdproxy_str
           { stycmd }{ entity - #1 }
-          \c_object_global_str
-          \c_object_public_str
 
         \@@_setdef_style:nn{ #1 }{ #2 }
 
@@ -560,8 +558,7 @@
 \seq_new:N \g_@@_tmp_seq
 \seq_new:N \g_@@_tmpb_seq
 
-\proxy_create_gset:NnnN \g_@@_grproxy_str { stycmd }{ groups }
-  \c_object_public_str
+\proxy_create_gset:Nnn \g_@@_grproxy_str { stycmd }{ groups }
   
 \proxy_push_member:Vnn \g_@@_grproxy_str { commands }{ seq }
 
@@ -579,11 +576,9 @@
         \object_address:nn{ stycmd }{ group - #1 }
       }
       {
-        \object_create:VnnNN \g_@@_grproxy_str
+        \object_create:Vnn \g_@@_grproxy_str
           { stycmd }
           { group - #1 }
-          \c_object_global_str
-          \c_object_public_str
       }
       
     \seq_gset_from_clist:Nn \g_@@_tmp_seq { #2 }
